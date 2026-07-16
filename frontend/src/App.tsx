@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, NavLink, Link, Navigate, useLoc
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { AuthGuard } from './components/AuthGuard'
 import AboutPage from './pages/AboutPage'
+import MethodologyPage from './pages/MethodologyPage'
 import ExplorePage from './pages/ExplorePage'
 import CollectPage from './pages/CollectPage'
 import LoginPage from './pages/LoginPage'
@@ -44,6 +45,16 @@ function NavBar() {
             }
           >
             About
+          </NavLink>
+          <NavLink
+            to="/methodology"
+            className={({ isActive }) =>
+              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
+              }`
+            }
+          >
+            Methodology
           </NavLink>
 
           {/* TODO(Phase 5): gate this on profile.is_researcher once the researcher tier lands */}
@@ -104,6 +115,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<ExplorePage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/methodology" element={<MethodologyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/collect" element={<AuthGuard><CollectPage /></AuthGuard>} />
