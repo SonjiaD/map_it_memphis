@@ -1,12 +1,10 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useParkingCount } from '../lib/useParkingCount'
 
 export default function SignupPage() {
   const { signUp } = useAuth()
   const navigate = useNavigate()
-  const parkingCount = useParkingCount()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,17 +36,13 @@ export default function SignupPage() {
         className="hidden lg:flex lg:w-1/2 flex-col justify-end p-12 relative overflow-hidden"
         style={{ background: '#0f2a2a' }}
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: "url('/Location_map_Oakland_2.svg.png')" }}
-        />
         <div className="relative z-10">
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-teal-400 mb-3">Oakland, California</p>
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-teal-400 mb-3">Soulsville, Memphis</p>
           <p className="text-2xl font-bold text-white leading-snug mb-4">
-            {parkingCount ? parkingCount.toLocaleString() : '65,334'} parking spaces.<br />26,251 homes needed.
+            Youth researcher accounts.
           </p>
           <p className="text-teal-300 text-sm leading-relaxed">
-            The math is simple. The solution needs Oaklanders like you.
+            Create an account to get started. A study coordinator will authorize field data collection for your account.
           </p>
         </div>
       </div>
@@ -87,7 +81,7 @@ export default function SignupPage() {
           ) : (
             <>
               <h1 className="text-3xl font-bold text-white mb-2">Create your account</h1>
-              <p className="text-teal-300 mb-8">Join Oaklanders mapping a better city.</p>
+              <p className="text-teal-300 mb-8">For MAPP Memphis youth researchers.</p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>

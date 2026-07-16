@@ -1,7 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -20,16 +19,7 @@ export default function LoginPage() {
     if (error) {
       setError('Invalid email or password. Please try again.')
     } else {
-      // Route to onboarding if they haven't set a goal yet (goal now lives in the
-      // profiles table, not auth metadata).
-      const { data: { user } } = await supabase.auth.getUser()
-      let hasGoal = false
-      if (user) {
-        const { data: prof } = await supabase
-          .from('profiles').select('goal').eq('id', user.id).maybeSingle()
-        hasGoal = !!prof?.goal
-      }
-      navigate(hasGoal ? '/parking-vote' : '/onboarding/goal')
+      navigate('/collect')
     }
   }
 
@@ -40,17 +30,13 @@ export default function LoginPage() {
         className="hidden lg:flex lg:w-1/2 flex-col justify-end p-12 relative overflow-hidden"
         style={{ background: '#0f2a2a' }}
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: "url('/tinyHomeParklet.webp')" }}
-        />
         <div className="relative z-10">
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-teal-400 mb-3">Oakland, California</p>
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-teal-400 mb-3">Soulsville, Memphis</p>
           <p className="text-2xl font-bold text-white leading-snug mb-4">
-            Every parking space you vote on is a data point.
+            Researcher access only.
           </p>
           <p className="text-teal-300 text-sm leading-relaxed">
-            When enough Oaklanders converge on the same spots, that's where the ordinance starts.
+            This login is for youth researchers collecting resident-drawn boundaries and interviews in the field.
           </p>
         </div>
       </div>
@@ -66,7 +52,7 @@ export default function LoginPage() {
           </Link>
 
           <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-teal-300 mb-8">Log in to continue building your map.</p>
+          <p className="text-teal-300 mb-8">Log in to continue collecting field data.</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
