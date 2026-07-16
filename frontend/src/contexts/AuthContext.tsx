@@ -2,20 +2,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
-// Mirrors the public.profiles table in Supabase.
+// Mirrors the public.profiles table in Supabase. is_researcher is only ever
+// flipped via the Supabase dashboard/service role, never by the user themselves.
 export interface Profile {
   id: string
   email: string | null
   full_name: string | null
-  occupation: string | null
-  age_range: string | null
-  household_type: string | null
-  income_range: string | null
-  goal: number | null
-  neighborhood: string | null
-  roles: string[] | null
-  ownership_model: string | null
-  ownership_other: string | null
+  is_researcher: boolean
+  created_at: string
 }
 
 interface AuthContextType {
