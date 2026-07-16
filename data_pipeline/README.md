@@ -1,83 +1,85 @@
 # data_pipeline/
 
-Scripts for collecting and processing parking data. Run these manually (or via GitHub Actions) to refresh the dataset.
+Scripts that fetch and clean the map data for MAPP Memphis. Run these manually to
+(re)generate the Soulsville boundary, amenity, and transit layers the frontend serves as
+static files — there's no backend, so whatever these scripts write under
+`frontend/public/memphis/` is exactly what the map shows.
 
-## Workflow (in order)
+## Setup
 
-```
-1. scrape_spotangels.py       → output/spotangels_YYYY-MM-DD_HH-MM.geojson
-2. compare_with_existing.py   → review report (read-only, no files written)
-3. merge_data.py              → data/candidates/candidates_with_features.geojson
-   (or add_manual_points.py, for patching a specific known coverage gap — see below)
-4. generate_parking_polygons.py → data/polygons/parking_polygons_latest.geojson
-5. sync_sites_to_supabase.py  → Supabase `sites` table (so votes join to spot location/amenities)
-```
-
-Steps 3 and 4 each write a run record to `data/runs/<timestamp>_<script>/` right
-after updating their `_latest` file — see "Run history" below. Step 5 pushes the
-resulting spots into the database — run it whenever the spot set changes (see the
-"Supabase database" section below).
-
-## Periodic OSM proximity-field refresh (independent of the workflow above)
-
-```
-5. fetch_osm_features.py      → data/features/*.geojson (5 category layers)
-6. compute_spot_distances.py  → data/polygons/parking_polygons_latest.geojson
-   (recomputes transit_dist and city_facility_dist per INDIVIDUAL spot, not per shared
-   block-level candidate — see the script's docstring for why this distinction matters)
+```bash
+python -m venv venv
+venv\Scripts\activate        # Windows; source venv/bin/activate on macOS/Linux
+pip install -r data_pipeline/requirements.txt
 ```
 
-This only needs to be re-run periodically to keep OSM coverage fresh, or after step 4
-above produces new/changed spots (step 4's overlap guards can drop or shift spots, so
-distances need recomputing against whatever spot set actually resulted). It does not
-touch `data/candidates/`.
-
-## Run history
-
-`merge_data.py`, `generate_parking_polygons.py`, and `compute_spot_distances.py` each
-write to `data/runs/<timestamp>_<script_name>/` right after updating their committed
-`_latest` file: a snapshot of what they wrote (local-only, gitignored) plus a
-`manifest.yaml` (committed) with counts and a diff against that same script's previous
-run. See `data/README.md`'s "Versioning" section for the full shape. Pass `--notes
-"..."` to any of the three to record why a run was made.
+`export_research_data.py` additionally needs a `data_pipeline/.env` with Supabase
+credentials — see `data_pipeline/.env.example`.
 
 ## scripts/
 
 | Script | What it does |
 |--------|-------------|
-| `scrape_spotangels.py` | Navigates SpotAngels via headless browser across a grid of Oakland, captures free parking spots. Saves checkpoints every 100 tiles so crashes don't lose progress. |
-| `compare_with_existing.py` | Compares a new scrape against the existing candidates file. Read-only — prints an overlap report for manual review before merging. |
-| `merge_data.py` | Merges a new scrape into `data/candidates/candidates_with_features.geojson`. New data overwrites by ID; existing spots not in the new scrape are kept. Then spatially dedupes: points from different sources within 8m of each other at the same address are collapsed to one, since id-based merging can't catch duplicates across sources that never shared an id. |
-| `add_manual_points.py` | Patches a known coverage gap where the SpotAngels scrape has no listings despite real-world parking existing (e.g. informal/unregulated curb or RV parking a paid parking app wouldn't catalogue). Finds the target street's OSM edges, drops one candidate per block, and computes real `transit_dist`/`city_facility_dist` via live OSM/Overpass queries. Add new streets to the `TARGET_STREETS` list in the script as new gaps are found. |
-| `generate_parking_polygons.py` | Reads candidate points, snaps each to the nearest street edge, packs 30 ft × 10 ft parking rectangles. Drops duplicate directional OSM edges (a two-way street appears twice, once per direction) before packing, and skips any rectangle that would overlap one already placed on the same edge — guards against streets that curve back near themselves (e.g. hillside hairpins/switchbacks), where two along-curve-distant positions can land physically on top of each other. Updates `parking_polygons_latest.geojson`. |
-| `fetch_osm_features.py` | Queries Overpass (via osmnx) for 5 proximity categories with a genuine OSM-tag equivalent (transit stops, parks, water fountains, streams, grocery stores) across the full Oakland bbox. Dedupes by OSM element id, then by ~15m proximity (except streams — linear features, nearby segments are legitimately distinct). Saves one GeoJSON per category to `data/features/`. |
-| `compute_spot_distances.py` | Reads `data/features/*.geojson` + `data/polygons/parking_polygons_latest.geojson`. Computes `transit_dist`, `city_facility_dist`, `water_fountain_dist`, `streams_oakland_dist`, and `grocery_dist` for every *individual* parking spot, using each spot's own location rather than the shared parent candidate's. Only `transit_dist`/`city_facility_dist` are currently used by the frontend; the other 3 are computed but not yet wired in. `water_infrastructure_dist`/`homeless_service_dist` (no OSM equivalent) are left untouched. |
-| `fix_parking_polygons.py` | One-off utility for patching bad polygon data. |
-| `sync_sites_to_supabase.py` | Pushes every parking spot from `parking_polygons_latest.geojson` into the Supabase `sites` table (coordinates, address, amenity distances, and each spot's derived Oakland neighborhood), so votes can be joined to real location data for research. Requires `SUPABASE_SERVICE_ROLE_KEY`. Re-run after `generate_parking_polygons.py` / `compute_spot_distances.py` change the spot set. |
-| `export_research_data.py` | Dumps the full research dataset to timestamped CSVs under `data/exports/<timestamp>/` — the normalized tables (`profiles`, `sites`, `votes`, `vote_events`) plus the two convenience views (`votes_research`, `site_leaderboard`). Requires `SUPABASE_SERVICE_ROLE_KEY`. |
-| `run_history.py` | Shared helper (not a standalone script) used by the pipeline scripts to write `data/runs/` snapshots and manifests. |
+| `fetch_memphis_boundaries.py` | Fetches census tracts and ZIP code tabulation areas from the US Census Bureau's TIGERweb REST API, clipped to a wide bbox around Soulsville. Also writes a **placeholder** Memphis 3.0 South District polygon (see `data/README.md` for why, and how to replace it with the real boundary once downloaded). Writes to both `data/boundaries/` (source-of-truth copy) and `frontend/public/memphis/` (what the site serves). |
+| `fetch_soulsville_amenities.py` | Fetches grocery stores, parks, community centers, libraries, churches, schools, and transit (bus stops + routes) from OpenStreetMap via the Overpass API, over the Soulsville bbox. Writes to `frontend/public/memphis/amenities/` and `frontend/public/memphis/transit/`. See `data/README.md` for known gaps (some categories have very few or zero OSM-tagged results in this area — documented per-file, not silently missing). |
+| `export_research_data.py` | Dumps the full research dataset (`profiles`, `drawn_boundaries`, `asset_pins`, `oral_histories`) to timestamped CSVs under `data/exports/<timestamp>/`. Requires `SUPABASE_SERVICE_ROLE_KEY` (these tables have RLS enabled). |
+| `run_history.py` | Shared helper (not a standalone script) used by the fetch/export scripts to write `data/runs/` snapshots and manifests. |
 
-## Supabase database (survey data)
+## Run history
 
-The website records all its survey/vote data in Supabase (project `tinyhome-submissions`). Schema:
+Each script that writes a data file records a run under `data/runs/<timestamp>_<script_name>/`:
+a `manifest.yaml` (committed — counts, source, notes) and, where relevant, a data snapshot
+(local-only, gitignored). Each script keeps its own history lane, so a rerun only diffs
+against that same script's previous run.
+
+## Replacing OSM data with curated sources
+
+Several categories currently come from OpenStreetMap because it's directly scriptable —
+no manual download step. DataMidSouth publishes cleaner, curated versions of some of these
+(MATA stops/routes, libraries, community centers), but its portal has static/API exports
+disabled for the datasets checked so far, so getting that data in means a manual browser
+download. If/when you have one:
+
+1. Download the dataset as GeoJSON from datamidsouth.org (or wherever the authoritative
+   source turns out to be).
+2. Drop it in at the matching path under `frontend/public/memphis/` (e.g.
+   `frontend/public/memphis/transit/stops.geojson`), replacing the OSM-derived file.
+3. Note the swap in `data/README.md`'s per-file table so it's clear which files are
+   OSM-derived vs. official-source.
+
+## Roadmap: disinvestment / context layers (not yet fetched)
+
+These were identified as relevant to the project's framing (interview themes around
+access, safety, and disinvestment) but aren't part of the current build. Sources, for
+whenever this is picked up:
+
+- Eviction court cases, Shelby County — https://www.datamidsouth.org/explore/assets/eviction-court-cases-shelby-county/
+- Building & demolition permits — https://www.datamidsouth.org/explore/assets/shelby-county-building-and-demolition-permits/
+- Historical code enforcement requests — https://www.datamidsouth.org/explore/assets/historical-code-enforcement-requests/
+- Memphis Police Department public safety incidents — https://data.memphistn.gov/Public-Safety/Memphis-Police-Department-Public-Safety-Incidents/puh4-eea4/about_data
+- Median household income by race, median monthly housing cost (tract-level context) — search datamidsouth.org/explore/
+
+## Supabase database
+
+Project `mapp-memphis` (separate from the prior `tinyhome-submissions` project). Schema
+lives in `supabase/migrations/`. Summary:
 
 | Table | Holds |
 |-------|-------|
-| `profiles` | One row per signed-up user: name, email, occupation, age/household/income ranges, goal, neighborhood, connection-to-Oakland roles, ownership preference. RLS on (each user sees only their own row). |
-| `sites` | One row per parking spot (synced from the geojson by `sync_sites_to_supabase.py`): coordinates, address, neighborhood, all amenity distances. |
-| `votes` | One current row per (user, spot): support/oppose + comment. Login required (`user_id` not null). |
-| `vote_events` | Append-only history of every vote cast / changed / retracted. |
+| `profiles` | One row per account: name, email, `is_researcher` (flipped manually in the Supabase dashboard — never user-settable). |
+| `drawn_boundaries` | One row per resident interview: the drawn boundary polygon, respondent metadata (age range, years in neighborhood, relationship to the neighborhood), consent, session date. |
+| `asset_pins` | One row per place a respondent pointed out: category, location, why it matters, optionally linked to a `drawn_boundaries` row. |
+| `oral_histories` | Schema in place for a later phase (audio/transcript pins) — not yet exposed in the UI. |
 
-Two views join these for analysis: `vote_research_view` (one row per vote, every site + voter field attached — the master research table) and `site_vote_summary` (spots ranked by support, with who voted which way).
+RLS: public read of published rows, insert/update restricted to accounts with
+`is_researcher = true` on their own rows. See the migration files for the exact policies.
 
-**How to analyze:** run `export_research_data.py` to get the CSVs, then pivot / `groupby` offline in Excel / pandas / R. Export the master `votes_research.csv` once and derive rankings, demographic breakdowns, and amenity correlations from it — no need to hand-write SQL per question. Any custom question is still reachable by querying the interconnected tables directly (the views are just saved shortcuts for the common ones).
-
-**Service role key:** `sync_sites_to_supabase.py` and `export_research_data.py` both need `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env` (Supabase dashboard → Settings → API → `service_role` secret) — the sites table's RLS blocks writes from the anon key, and the profiles table's RLS blocks reading other users' rows. This key is admin-only; never expose it in the frontend.
-
-## output/
-
-Raw SpotAngels scrape files — gitignored (large, intermediate). Safe to delete after merging.
+**Service role key:** `export_research_data.py` needs `SUPABASE_SERVICE_ROLE_KEY` in
+`data_pipeline/.env` (Supabase dashboard → Settings → API → `service_role` secret) to read
+every row, including unpublished ones, for research purposes. This key is admin-only —
+never expose it in the frontend.
 
 ## config.py
 
-Shared settings: Oakland bounding box, grid spacing, Playwright timeouts, checkpoint interval.
+Shared settings: the Soulsville bbox, the wider boundary-clip bbox, and the UTM zone
+(15N — Memphis, not the 10N used by the prior Oakland project).

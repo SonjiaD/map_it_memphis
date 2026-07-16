@@ -1,0 +1,29 @@
+script: fetch_soulsville_amenities
+generated_at: '2026-07-16T06:58:11.564865+00:00'
+counts:
+  grocery:
+    features: 0
+    kb: 0.1
+  parks:
+    features: 7
+    kb: 1.4
+  community_centers:
+    features: 1
+    kb: 0.5
+  libraries:
+    features: 1
+    kb: 0.3
+  churches:
+    features: 168
+    kb: 30.6
+  schools:
+    features: 19
+    kb: 3.7
+  transit_stops:
+    features: 0
+    kb: 0.1
+  transit_routes:
+    features: 16
+    kb: 479.6
+notes: OSM/Overpass source. Swap libraries/community_centers/transit for DataMidSouth's
+  curated datasets via --from-file if manually downloaded.

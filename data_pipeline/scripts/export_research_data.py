@@ -1,25 +1,23 @@
 """
 Exports the full research dataset from Supabase to timestamped CSV files, so all the
-data collected by the website (signups, onboarding survey answers, votes, vote history,
-site metadata) can be analyzed offline in Excel / pandas / R.
+data collected in the field (resident-drawn boundaries, asset pins, oral history
+metadata, researcher accounts) can be analyzed offline in Excel / pandas / R / Dedoose.
 
-Writes two layers:
-  1. The full NORMALIZED dataset  — one CSV per table: profiles, sites, votes, vote_events.
-     Because these are interconnected by user_id / site_id, you can reproduce ANY view or
-     answer ANY custom question offline, not just the two pre-built ones.
-  2. The two CONVENIENCE views     — votes_research.csv (one row per vote, every site +
-     profile field attached) and site_leaderboard.csv (sites ranked by support_count).
+Writes one CSV per table: profiles, drawn_boundaries, asset_pins, oral_histories. Because
+these are interconnected by researcher_id / boundary_id, you can reproduce any view or
+answer any custom question offline.
 
-Requires a SERVICE ROLE key (not the anon key): profiles has RLS enabled, so reading every
-user's row for research requires the service role. Add SUPABASE_SERVICE_ROLE_KEY to
-backend/.env (Supabase dashboard -> Settings -> API -> service_role secret). This is an
-admin-only tool — never ship this key to the frontend.
+Requires a SERVICE ROLE key (not the anon key): these tables have RLS enabled, so reading
+every row (including unpublished/withdrawn-consent ones, useful for research audit trails)
+requires the service role. Add SUPABASE_SERVICE_ROLE_KEY to data_pipeline/.env (Supabase
+dashboard -> Settings -> API -> service_role secret). This is an admin-only tool — never
+ship this key to the frontend.
 
 Usage:
     python data_pipeline/scripts/export_research_data.py [--notes "..."]
 
 Outputs:
-    data/exports/<timestamp>/{profiles,sites,votes,vote_events,votes_research,site_leaderboard}.csv
+    data/exports/<timestamp>/{profiles,drawn_boundaries,asset_pins,oral_histories}.csv
     data/runs/<timestamp>_export_research_data/manifest.yaml  (history record)
 """
 
@@ -37,25 +35,23 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_NAME = "export_research_data"
 PAGE = 1000
 
-# (output filename, supabase table/view name, ordering column or None)
+# (output filename, supabase table name, ordering column or None)
 EXPORTS = [
-    ("profiles.csv",         "profiles",           "created_at"),
-    ("sites.csv",            "sites",              "site_id"),
-    ("votes.csv",            "votes",              "created_at"),
-    ("vote_events.csv",      "vote_events",        "event_at"),
-    ("votes_research.csv",   "vote_research_view", "created_at"),
-    ("site_leaderboard.csv", "site_vote_summary",  None),        # sorted below by support_count
+    ("profiles.csv",          "profiles",          "created_at"),
+    ("drawn_boundaries.csv",  "drawn_boundaries",  "created_at"),
+    ("asset_pins.csv",        "asset_pins",        "created_at"),
+    ("oral_histories.csv",    "oral_histories",    "created_at"),
 ]
 
 
 def get_client():
-    load_dotenv(ROOT / "backend" / ".env")
+    load_dotenv(ROOT / "data_pipeline" / ".env")
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
-        print("ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in backend/.env")
-        print("  profiles has RLS enabled, so exporting every user's data requires the")
-        print("  service_role key (Supabase dashboard -> Settings -> API -> service_role secret).")
+        print("ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in data_pipeline/.env")
+        print("  These tables have RLS enabled, so exporting every row for research requires")
+        print("  the service_role key (Supabase dashboard -> Settings -> API -> service_role secret).")
         sys.exit(1)
     from supabase import create_client
     return create_client(url, key)
@@ -116,8 +112,6 @@ def main():
     for filename, table, order_col in EXPORTS:
         print(f"Exporting {table} -> {filename} ...")
         rows = fetch_all(client, table, order_col)
-        if table == "site_vote_summary":
-            rows.sort(key=lambda r: (r.get("support_count") or 0), reverse=True)
         n = write_csv(out_dir / filename, rows)
         counts[table] = n
         print(f"  {n:,} rows")

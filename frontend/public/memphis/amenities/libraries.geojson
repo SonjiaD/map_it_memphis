@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"osm_type": "way", "osm_id": 773890001, "name": "Hollie Price Library"}, "geometry": {"type": "Point", "coordinates": [-90.0356943, 35.118717]}}], "source": "OpenStreetMap via Overpass API", "fetched_at": "2026-07-16T06:56:55.609648+00:00"}

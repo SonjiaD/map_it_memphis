@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "source": "Geocoded from Knowledge Quest's published main campus address (590 Jennette Pl, Memphis, TN 38126) via OpenStreetMap Nominatim",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Knowledge Quest",
+        "role": "Community partner organization",
+        "address": "590 Jennette Pl, Memphis, TN 38126"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.0422676, 35.1187225]
+      }
+    }
+  ]
+}

@@ -1,21 +1,19 @@
 """
-Shared configuration for the SpotAngels data pipeline.
+Shared configuration for the MAPP Memphis data pipeline.
 """
 
-# Oakland bounding box
-OAKLAND_SW = (37.632, -122.355)   # (lat, lng) southwest corner
-OAKLAND_NE = (37.885, -122.114)   # (lat, lng) northeast corner
+# Soulsville study-area bounding box (lat, lng) — matches the bbox used in the
+# project's OSM/Overpass queries.
+SOULSVILLE_SW = (35.085, -90.045)
+SOULSVILLE_NE = (35.125, -90.000)
 
-# Grid spacing — ~400m steps, giving ~3,100 query points across Oakland
-GRID_LAT_STEP = 0.004
-GRID_LNG_STEP = 0.005
+# Wider clip window for official boundary layers (census tracts, zip codes). The
+# Modifiable Areal Unit Problem framing wants surrounding administrative units
+# visible on the map too, not just the ones directly over Soulsville.
+BOUNDARY_CLIP_SW = (35.02, -90.12)
+BOUNDARY_CLIP_NE = (35.19, -89.92)
 
-# Playwright settings
-WAIT_MS = 3000          # ms to wait per tile for the API call to fire
-PAGE_TIMEOUT_MS = 15000 # max ms to wait for page to load before skipping tile
-
-# Save a checkpoint every N tiles so a crash doesn't lose all progress
-CHECKPOINT_EVERY = 100
-
-# SpotAngels map zoom level — 15 is the level that triggers the parking API
-ZOOM = 15
+# UTM Zone 15N — the correct projected CRS for Memphis/Shelby County (Oakland used
+# zone 10N / EPSG:26910; that does not apply here).
+UTM_CRS = 26915
+WGS84_CRS = 4326

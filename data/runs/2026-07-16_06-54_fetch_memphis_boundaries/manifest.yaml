@@ -1,0 +1,15 @@
+script: fetch_memphis_boundaries
+generated_at: '2026-07-16T06:54:26.846919+00:00'
+counts:
+  census_tracts:
+    features: 122
+    kb: 100.3
+  zip_codes:
+    features: 23
+    kb: 124.6
+  memphis30_south_district:
+    features: 1
+    kb: 0.5
+    placeholder: true
+notes: South District is a placeholder pending a manual download; tracts/zips are
+  real TIGERweb data.
