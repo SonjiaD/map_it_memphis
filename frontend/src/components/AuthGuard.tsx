@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-page">
+    <div className="flex-1 flex items-center justify-center bg-surface-page">
       <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )

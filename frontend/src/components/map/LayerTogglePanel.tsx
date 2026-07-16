@@ -75,7 +75,7 @@ export function LayerTogglePanel({ layers, onChange }: {
         </button>
 
         {open && (
-          <div className="px-2 pb-3 max-h-[65vh] overflow-y-auto">
+          <div className="px-2 pb-3 max-h-[calc(100vh-10rem)] overflow-y-auto">
             <Group title="Official boundaries">
               <Toggle label="Census tracts" swatch="#6b7280" checked={layers.censusTracts}
                 onChange={v => onChange({ ...layers, censusTracts: v })} />

@@ -13,7 +13,7 @@ function AboutSection({ label, children }: { label: string; children: React.Reac
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-surface-page">
+    <div className="flex flex-col min-h-full bg-surface-page">
       <div className="bg-primary-900 px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <SectionLabel className="text-teal-400 mb-3">Soulsville, Memphis</SectionLabel>
