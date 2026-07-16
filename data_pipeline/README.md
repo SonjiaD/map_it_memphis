@@ -1,6 +1,6 @@
 # data_pipeline/
 
-Scripts that fetch and clean the map data for MAPP Memphis. Run these manually to
+Scripts that fetch and clean the map data for MAPP It Memphis. Run these manually to
 (re)generate the Soulsville boundary, amenity, and transit layers the frontend serves as
 static files — there's no backend, so whatever these scripts write under
 `frontend/public/memphis/` is exactly what the map shows.

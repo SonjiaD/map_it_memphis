@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { AuthGuard } from './components/AuthGuard'
+import { AuthGuard, ResearcherGuard } from './components/AuthGuard'
 import AboutPage from './pages/AboutPage'
 import MethodologyPage from './pages/MethodologyPage'
 import ExplorePage from './pages/ExplorePage'
@@ -10,7 +10,7 @@ import SignupPage from './pages/SignupPage'
 import ProfilePage from './pages/ProfilePage'
 
 function NavBar() {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
 
   async function handleSignOut() {
@@ -22,7 +22,7 @@ function NavBar() {
     <nav className="bg-primary-900 border-b border-primary-800">
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
         <Link to="/" className="text-lg font-semibold text-white tracking-tight">
-          MAPP Memphis
+          MAPP It Memphis
         </Link>
         <div className="flex items-center gap-1">
           <NavLink
@@ -57,8 +57,7 @@ function NavBar() {
             Methodology
           </NavLink>
 
-          {/* TODO(Phase 5): gate this on profile.is_researcher once the researcher tier lands */}
-          {user && (
+          {user && profile?.is_researcher && (
             <NavLink
               to="/collect"
               className={({ isActive }) =>
@@ -118,7 +117,7 @@ function AppShell() {
           <Route path="/methodology" element={<MethodologyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/collect" element={<AuthGuard><CollectPage /></AuthGuard>} />
+          <Route path="/collect" element={<ResearcherGuard><CollectPage /></ResearcherGuard>} />
           <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

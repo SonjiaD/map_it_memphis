@@ -1,5 +1,5 @@
 """
-Fetches community amenity and transit layers for the MAPP Memphis map from OpenStreetMap
+Fetches community amenity and transit layers for the MAPP It Memphis map from OpenStreetMap
 via the Overpass API, across the Soulsville bbox. Every category is written as Point
 features (a representative center point for ways/relations, e.g. a park's centroid) since
 the map displays these as pins, not shapes — see data_pipeline/config.py CATEGORIES below

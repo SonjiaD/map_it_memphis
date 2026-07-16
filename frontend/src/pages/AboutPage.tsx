@@ -17,7 +17,7 @@ export default function AboutPage() {
       <div className="bg-primary-900 px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <SectionLabel className="text-teal-400 mb-3">Soulsville, Memphis</SectionLabel>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">About MAPP Memphis</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">About MAPP It Memphis</h1>
           <p className="text-teal-300 leading-relaxed max-w-2xl">
             Measuring Assets, People, and Places: a youth-led project mapping Soulsville
             the way its residents actually see it.
@@ -34,7 +34,7 @@ export default function AboutPage() {
             people who live there.
           </p>
           <p className="text-gray-600 leading-relaxed">
-            MAPP Memphis asks residents to draw their own Soulsville, and to mark the
+            MAPP It Memphis asks residents to draw their own Soulsville, and to mark the
             places that matter to them: the corner store, the church, the park where
             everyone actually goes. When enough residents have drawn their neighborhood,
             the map shows where their answers agree, and how that shared Soulsville

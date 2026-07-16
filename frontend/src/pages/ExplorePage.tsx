@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { LayerTogglePanel, DEFAULT_LAYER_STATE, type LayerState } from '../components/map/LayerTogglePanel'
@@ -6,7 +6,11 @@ import { CensusTractsLayer, ZipCodesLayer, SouthDistrictLayer } from '../compone
 import { AmenityLayer } from '../components/map/AmenityLayer'
 import { TransitLayer } from '../components/map/TransitLayer'
 import { KnowledgeQuestMarker } from '../components/map/KnowledgeQuestMarker'
+import { ConsensusHeatmapLayer, DrawnBoundariesLayer, AssetPinsLayer } from '../components/map/ResidentLayers'
+import { StatCallout } from '../components/map/StatCallout'
 import { AMENITY_CATEGORIES } from '../components/map/pins'
+import { useDrawnBoundaries } from '../hooks/useDrawnBoundaries'
+import { computeHeatmap } from '../lib/consensusHeatmap'
 
 const SOULSVILLE_CENTER: [number, number] = [35.104, -90.025]
 const WELCOME_DISMISSED_KEY = 'mapp-welcome-dismissed'
@@ -14,7 +18,7 @@ const WELCOME_DISMISSED_KEY = 'mapp-welcome-dismissed'
 function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div className="absolute bottom-6 left-3 z-[1000] max-w-sm bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-      <h2 className="font-bold text-gray-900 mb-1.5">What is MAPP Memphis?</h2>
+      <h2 className="font-bold text-gray-900 mb-1.5">What is MAPP It Memphis?</h2>
       <p className="text-sm text-gray-600 leading-relaxed mb-3">
         Soulsville residents draw their own neighborhood boundary and mark the places
         that matter to them. This map shows how their answers compare with official
@@ -39,6 +43,14 @@ export default function ExplorePage() {
   const [layers, setLayers] = useState<LayerState>(DEFAULT_LAYER_STATE)
   const [showWelcome, setShowWelcome] = useState(
     () => !localStorage.getItem(WELCOME_DISMISSED_KEY),
+  )
+
+  // Live resident data: initial fetch + realtime inserts, shared by the heatmap,
+  // the raw-boundaries layer, and the stat callout so only one channel is open.
+  const boundaries = useDrawnBoundaries()
+  const heatmap = useMemo(
+    () => computeHeatmap(boundaries.map(b => b.geometry)),
+    [boundaries],
   )
 
   function dismissWelcome() {
@@ -70,11 +82,15 @@ export default function ExplorePage() {
         {layers.transit && <TransitLayer />}
         {layers.knowledgeQuest && <KnowledgeQuestMarker />}
 
-        {/* Resident data layers (consensus heatmap, drawn boundaries, asset pins)
-            are wired in with the live Supabase data in a later phase. */}
+        {layers.residentHeatmap && <ConsensusHeatmapLayer heatmap={heatmap} />}
+        {layers.residentBoundaries && <DrawnBoundariesLayer boundaries={boundaries} />}
+        {layers.residentPins && <AssetPinsLayer />}
       </MapContainer>
 
       <LayerTogglePanel layers={layers} onChange={setLayers} />
+      {(layers.residentHeatmap || layers.residentBoundaries) && (
+        <StatCallout heatmap={heatmap} boundaryCount={boundaries.length} />
+      )}
       {showWelcome && <WelcomeCard onDismiss={dismissWelcome} />}
     </div>
   )

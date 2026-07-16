@@ -1,5 +1,5 @@
 """
-Shared configuration for the MAPP Memphis data pipeline.
+Shared configuration for the MAPP It Memphis data pipeline.
 """
 
 # Soulsville study-area bounding box (lat, lng) — matches the bbox used in the

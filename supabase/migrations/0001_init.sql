@@ -1,4 +1,4 @@
--- MAPP Memphis initial schema.
+-- MAPP It Memphis initial schema.
 -- Two-tier access: public read of published data, researcher-only writes.
 -- is_researcher is never user-settable; only flippable via the dashboard/service role.
 

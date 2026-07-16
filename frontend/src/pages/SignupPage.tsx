@@ -81,7 +81,7 @@ export default function SignupPage() {
           ) : (
             <>
               <h1 className="text-3xl font-bold text-white mb-2">Create your account</h1>
-              <p className="text-teal-300 mb-8">For MAPP Memphis youth researchers.</p>
+              <p className="text-teal-300 mb-8">For MAPP It Memphis youth researchers.</p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>

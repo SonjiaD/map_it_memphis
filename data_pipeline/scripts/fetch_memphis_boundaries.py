@@ -1,5 +1,5 @@
 """
-Fetches official administrative boundary layers for the MAPP Memphis map: census
+Fetches official administrative boundary layers for the MAPP It Memphis map: census
 tracts and ZIP code tabulation areas from the US Census Bureau's TIGERweb REST API
 (a stable, scriptable, authoritative source — no manual download needed), clipped to
 the BOUNDARY_CLIP bbox around Soulsville.

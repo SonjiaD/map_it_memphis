@@ -1,4 +1,4 @@
-# MAPP Memphis
+# MAPP It Memphis
 
 **Measuring Assets, People, and Places** is a youth-led participatory mapping project for the Soulsville neighborhood in South Memphis, TN, supporting research by Dr. Brenda Mathias (School of Social Work, University of Memphis) in partnership with Knowledge Quest.
 
