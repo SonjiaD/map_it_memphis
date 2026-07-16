@@ -1,106 +1,27 @@
-# 🏡 TinyHome-Oakland: Site Selection Tool
+# MAPP Memphis
 
-This is a geospatial decision support web app for identifying optimal locations to place Tiny Homes for unhoused populations in Oakland, California.
+**Measuring Assets, People, and Places** — a youth-led participatory mapping project for the Soulsville neighborhood in South Memphis, TN.
 
-It allows users to assign priorities to different urban planning criteria using the Analytical Hierarchy Process (AHP), visualize the ranked locations on a map, and optionally submit their preferences for research purposes.
+MAPP Memphis compares resident-drawn neighborhood boundaries against official administrative boundaries (census tracts, zip codes, Memphis 3.0 planning districts) to show where the two diverge. Youth researchers trained through a partnership with **Knowledge Quest** collect boundary drawings, asset pins, and oral history interviews from Soulsville residents in the field; the public site displays that data layered against the official lines.
 
----
-## Website Deployed
-Check out our website below and try it out!
-https://tinyhomeproject.netlify.app/
+This project supports research by **Dr. Brenda Mathias**, Assistant Professor, School of Social Work, University of Memphis.
 
-## 📦 Project Evolution
-
-This tool was originally built using **Streamlit** for rapid prototyping and has since been upgraded to a **Flask + React** full-stack architecture for better performance, flexibility, and deployment scalability.
+> **Status: work in progress.** This repo is being pivoted from a prior project, TinyHome-Oakland (a parking-siting tool for Oakland, CA), and is being rebuilt in phases. This README is updated as each phase lands.
 
 ---
 
-## 🛠 Tech Stack
+## Architecture
 
-### Phase 1: Streamlit Prototype
-- Built using `Streamlit`, `Folium`, and `Pydeck`
-- Served as a rapid MVP for collecting feedback
+- **Frontend:** React + TypeScript + TailwindCSS + Leaflet (`react-leaflet`), deployed on Netlify.
+- **Database:** Supabase (Postgres + Auth), with row-level security enforcing a two-tier access model:
+  - **Public visitors** — no login, read-only map exploration.
+  - **Youth researchers** — logged-in accounts flagged `is_researcher` (set manually by the study coordinator), who can draw boundaries and drop asset pins from the field.
+- **No backend server.** Official boundary/amenity/transit layers are static GeoJSON files served alongside the frontend; researcher submissions write directly to Supabase (authorized by RLS); the resident-drawn consensus heatmap is computed live in the browser (Turf.js) from published submissions — no server-side compute needed.
+- **`data_pipeline/`:** one-off/periodic Python scripts that fetch and clean Memphis/Shelby County boundary and amenity data (census tracts, zip codes, MATA transit, grocery stores, parks, libraries, etc.) into the static GeoJSON files the frontend serves.
 
-#### Past Repository:
-https://github.com/SonjiaD/tinyhome-backend
+## Local setup
 
-### Phase 2: Full-stack Migration
-Now rebuilt with a modern architecture:
-
-#### 🖥️ Frontend
-- **React + TypeScript**
-- **TailwindCSS** for styling
-- **Leaflet** for interactive mapping
-- **Recharts** for displaying AHP weights
-
-#### ⚙️ Backend
-- **Flask** (Python)
-- **Supabase** (PostgreSQL) for storing submissions
-- **CORS + .env** for secure deployment
-
-#### ☁️ Deployment
-- **Frontend:** [Netlify](https://www.netlify.com/)
-- **Backend:** [Render](https://render.com/)
-- **Database:** [Supabase](https://supabase.com/) (PostgreSQL)
-
----
-
-## 🧪 Features
-
-✅ Interactive AHP weight assignment  
-✅ Realtime ranked site map using GeoJSON data  
-✅ Bar chart of feature priorities  
-✅ Save your personalized map + feedback to a database  
-✅ View saved submissions (coming soon: Gallery tab)  
-
----
-
-
-## 🚀 Local Setup
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/SonjiaD/tinyhomeproject
-cd tinyhomeproject
-```
-
-### 2. Backend (Flask) — Terminal 1
-
-Activate the virtual environment from the repo root, then run the backend:
-
-```bash
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-# source venv/bin/activate
-```
-
-If you don't have a `venv/` folder yet, create one first:
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-Then install dependencies and start the server:
-
-```bash
-cd backend
-pip install -r requirements.txt
-python app.py
-```
-
-The backend runs on `http://localhost:10000`.
-
-> You also need a `backend/.env` file with your Supabase credentials:
-> ```ini
-> SUPABASE_URL=your-supabase-project-url
-> SUPABASE_KEY=your-supabase-anon-key
-> ```
-
-### 3. Frontend (React) — Terminal 2
+### Frontend
 
 ```bash
 cd frontend
@@ -108,14 +29,23 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173`. Open that URL in your browser.
+Runs on `http://localhost:5173`. Requires a `frontend/.env` with Supabase credentials — see `frontend/.env.example` (added in Phase 2).
 
-> **How it works:** `npm run dev` loads `frontend/.env.local` which points API calls to `http://localhost:10000` (local backend). Production builds (`npm run build`) load `frontend/.env.production` which points to the deployed Render backend. No code changes needed to switch.
+### Data pipeline
 
----
+See `data_pipeline/README.md` for fetching/regenerating the Memphis boundary and amenity layers.
 
+## Build progress
 
-## 👩‍🔬 Research Use
+- [x] **Phase 1 — Strip & rebrand.** Removed the Oakland parking-siting app (AHP/WSM ranking, voting, the Flask backend, Oakland map data). Rebuilt routing/nav for MAPP Memphis's public map + researcher login structure. Auth (login/signup) carried over from TinyHome-Oakland.
+- [ ] **Phase 2 — New Supabase project & schema.** `profiles` (with `is_researcher`), `drawn_boundaries`, `asset_pins`, `oral_histories`, RLS policies, Realtime.
+- [ ] **Phase 3 — Data pipeline.** Memphis census tracts, zip codes, Memphis 3.0 South District, transit, and community amenity layers.
+- [ ] **Phase 4 — Public map page.** The Soulsville explore map with toggleable official boundary and amenity layers.
+- [ ] **Phase 5 — Researcher tier.** Gating the field-collection tool to flagged accounts.
+- [ ] **Phase 6 — Collection tool.** Touch-friendly boundary drawing + asset-pin dropping for tablets in the field.
+- [ ] **Phase 7 — Live consensus heatmap.** Client-side aggregation of published boundaries into a heatmap + overlap statistic, live-updating via Supabase Realtime.
+- [ ] **Phase 8 — Content, env, deploy.** About/Methodology copy, `.env.example` files, Netlify config.
 
-Submissions are collected to support research by the Kalyan Lab at the University of British Columbia (UBC) in partnership with Neighborship, a nonprofit focused on housing justice.
+## Prior project
 
+This repo began as a fork of **TinyHome-Oakland**, a geospatial decision-support tool for siting Tiny Homes on Oakland parking spots (still live at [tinyhomeproject.netlify.app](https://tinyhomeproject.netlify.app/), on its own separate Supabase project — untouched by this pivot). MAPP Memphis reuses its stack pattern (React/TypeScript/Tailwind/Leaflet/Supabase) and some UI primitives (the map drawing-tool code, teardrop pin markers), but the ranking/voting logic and Oakland-specific data have been removed entirely, since there is nothing to rank or vote on in this project.
