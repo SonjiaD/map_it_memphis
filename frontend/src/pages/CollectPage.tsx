@@ -7,6 +7,31 @@ import { verticesToGeojsonPolygon } from '../lib/geo'
 import { PolygonDrawTool } from '../components/map/PolygonDrawTool'
 import { RespondentForm, EMPTY_RESPONDENT, type RespondentMeta } from '../components/collect/RespondentForm'
 import { ASSET_PIN_CATEGORIES, assetPinIcon } from '../components/map/pins'
+import { MapBackdrop } from '../components/MapBackdrop'
+
+const SESSION_STEPS = ['Consent', 'Draw', 'Places', 'Review']
+
+function ProgressDots({ current, light = false }: { current: number; light?: boolean }) {
+  return (
+    <div className="flex items-center gap-3 font-mono text-[10px] tracking-wider uppercase flex-wrap">
+      {SESSION_STEPS.map((s, i) => {
+        const state = i === current ? 'current' : i < current ? 'done' : 'todo'
+        const text = light
+          ? state === 'current' ? 'text-accent-300' : state === 'done' ? 'text-white/80' : 'text-white/40'
+          : state === 'current' ? 'text-accent-600' : state === 'done' ? 'text-primary-700' : 'text-primary-300'
+        const dot = light
+          ? state === 'current' ? 'bg-accent-300' : state === 'done' ? 'bg-white/80' : 'bg-white/30'
+          : state === 'current' ? 'bg-accent-500' : state === 'done' ? 'bg-primary-700' : 'bg-primary-300'
+        return (
+          <span key={s} className={`flex items-center gap-1.5 ${text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+            {String(i + 1).padStart(2, '0')} {s}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
 
 // Wide South Memphis view: the respondent chooses their own extent, and no
 // official boundary layers are ever shown here (they would anchor the drawing).
@@ -97,51 +122,55 @@ export default function CollectPage() {
     }
   }
 
-  // Step 1: respondent info + consent, no map yet
+  // Step 1: respondent info + consent, floating card over the map backdrop
   if (step === 'info') {
     return (
-      <div className="flex-1 overflow-auto bg-surface-page py-10 px-6">
-        <div className="max-w-xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-wider text-primary-700 mb-2">New session</p>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Before you start</h1>
-          <p className="text-gray-500 mb-8">
-            Read the consent script with the resident, then fill in these few details.
-            Nothing here identifies them.
-          </p>
-          <RespondentForm value={respondent} onChange={setRespondent} />
-          <button
-            onClick={() => setStep('draw')}
-            disabled={!respondent.consentGiven}
-            className="mt-8 w-full bg-primary-700 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-full transition-colors"
-          >
-            Start drawing
-          </button>
-          {!respondent.consentGiven && (
-            <p className="text-center text-sm text-gray-400 mt-3">Consent is required to continue.</p>
-          )}
+      <div className="relative flex-1 overflow-auto">
+        <MapBackdrop />
+        <div className="relative z-10 max-w-xl mx-auto px-4 py-24">
+          <div className="bg-white rounded-2xl shadow-2xl border border-border p-8">
+            <div className="mb-6"><ProgressDots current={0} /></div>
+            <h1 className="font-display text-3xl text-primary-900 mb-2">Before you start</h1>
+            <p className="text-sm text-primary-500 mb-8">
+              Read the consent script with the resident, then fill in these few details.
+              Nothing here identifies them.
+            </p>
+            <RespondentForm value={respondent} onChange={setRespondent} />
+            <button
+              onClick={() => setStep('draw')}
+              disabled={!respondent.consentGiven}
+              className="mt-8 w-full bg-primary-900 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-lg transition-colors"
+            >
+              Start drawing
+            </button>
+            {!respondent.consentGiven && (
+              <p className="text-center text-sm text-primary-400 mt-3">Consent is required to continue.</p>
+            )}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Step 5: saved confirmation, no map
+  // Step 5: saved confirmation
   if (step === 'saved') {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface-page px-6">
-        <div className="max-w-md text-center">
-          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-6">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <div className="relative flex-1 flex items-center justify-center px-4">
+        <MapBackdrop />
+        <div className="relative z-10 bg-white rounded-2xl shadow-2xl border border-border p-9 max-w-md text-center">
+          <div className="w-14 h-14 rounded-full bg-accent-50 flex items-center justify-center mx-auto mb-5">
+            <svg viewBox="0 0 24 24" className="w-7 h-7 text-accent-600" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Session saved</h1>
-          <p className="text-gray-500 mb-8">
+          <h1 className="font-display text-3xl text-primary-900 mb-2">Session saved</h1>
+          <p className="text-sm text-primary-500 mb-7">
             The boundary{pins.length > 0 ? ` and ${pins.length} pin${pins.length === 1 ? '' : 's'}` : ''} are
             saved and will appear on the public map right away.
           </p>
           <button
             onClick={resetSession}
-            className="bg-primary-700 hover:bg-primary-600 text-white font-bold px-8 py-3.5 rounded-full transition-colors"
+            className="bg-primary-900 hover:bg-primary-700 text-white font-semibold px-7 py-3 rounded-lg transition-colors"
           >
             Start new session
           </button>
@@ -199,27 +228,27 @@ export default function CollectPage() {
 
       {/* Draw toolbar */}
       {step === 'draw' && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 bg-white rounded-xl shadow-lg border border-border px-3 py-2">
           {!boundaryClosed ? (
             <>
               <button
                 onClick={() => setVertices(vertices.slice(0, -1))}
                 disabled={vertices.length === 0}
-                className="min-h-[44px] px-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
               >
                 Undo
               </button>
               <button
                 onClick={() => setVertices([])}
                 disabled={vertices.length === 0}
-                className="min-h-[44px] px-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
               >
                 Clear
               </button>
               <button
                 onClick={() => setBoundaryClosed(true)}
                 disabled={vertices.length < 3}
-                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white disabled:opacity-40"
+                className="min-h-[44px] px-5 rounded-lg text-sm font-bold bg-primary-900 hover:bg-primary-700 text-white disabled:opacity-40"
               >
                 Finish boundary
               </button>
@@ -228,13 +257,13 @@ export default function CollectPage() {
             <>
               <button
                 onClick={() => { setBoundaryClosed(false); setVertices([]) }}
-                className="min-h-[44px] px-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
               >
                 Redraw
               </button>
               <button
                 onClick={() => setStep('pins')}
-                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
+                className="min-h-[44px] px-5 rounded-lg text-sm font-bold bg-primary-900 hover:bg-primary-700 text-white"
               >
                 Continue to pins
               </button>
@@ -245,24 +274,24 @@ export default function CollectPage() {
 
       {/* Pins toolbar */}
       {step === 'pins' && !pendingPin && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 bg-white rounded-xl shadow-lg border border-border px-3 py-2">
           <button
             onClick={() => setStep('draw')}
-            className="min-h-[44px] px-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100"
+            className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
           >
             Back
           </button>
           {pins.length > 0 && (
             <button
               onClick={() => setPins(pins.slice(0, -1))}
-              className="min-h-[44px] px-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
             >
               Remove last pin
             </button>
           )}
           <button
             onClick={() => setStep('review')}
-            className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
+            className="min-h-[44px] px-5 rounded-lg text-sm font-bold bg-primary-900 hover:bg-primary-700 text-white"
           >
             Review{pins.length > 0 ? ` (${pins.length} pin${pins.length === 1 ? '' : 's'})` : ''}
           </button>
@@ -280,7 +309,7 @@ export default function CollectPage() {
                   <button
                     key={c.key}
                     onClick={() => setPendingPin({ ...pendingPin, category: c.key })}
-                    className={`min-h-[44px] px-4 rounded-full text-sm font-medium border-2 transition-colors ${
+                    className={`min-h-[44px] px-4 rounded-lg text-sm font-medium border-2 transition-colors ${
                       pendingPin.category === c.key
                         ? 'border-primary-500 bg-primary-50 text-primary-700'
                         : 'border-gray-200 bg-white text-gray-600'
@@ -314,13 +343,13 @@ export default function CollectPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setPendingPin(null)}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-semibold text-gray-600 border-2 border-gray-200 hover:bg-gray-50"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-gray-600 border border-border hover:bg-gray-50"
               >
                 Discard
               </button>
               <button
                 onClick={() => { setPins([...pins, pendingPin]); setPendingPin(null) }}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-bold bg-primary-900 hover:bg-primary-700 text-white"
               >
                 Save pin
               </button>
@@ -368,14 +397,14 @@ export default function CollectPage() {
               <button
                 onClick={() => setStep('pins')}
                 disabled={saving}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-semibold text-gray-600 border-2 border-gray-200 hover:bg-gray-50 disabled:opacity-40"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-gray-600 border border-border hover:bg-gray-50 disabled:opacity-40"
               >
                 Back
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white disabled:opacity-60"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-bold bg-primary-900 hover:bg-primary-700 text-white disabled:opacity-60"
               >
                 {saving ? 'Saving…' : 'Save session'}
               </button>

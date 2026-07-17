@@ -1,7 +1,10 @@
 /** @type {import('tailwindcss').Config} */
-// MAPP It Memphis theme: University of Memphis blue (primary) + Stax-gold accent,
-// with a warm rust ramp reserved for resident-drawn data layers so resident data
-// always reads warm against the cool official blues.
+// MAPP It Memphis design system:
+// - primary = ink (warm charcoal, high contrast) for text, dark bands, primary buttons
+// - accent = terracotta, the color of resident-drawn boundaries (the project's own mark)
+// - paper surfaces, hairline borders
+// Map layer hues (slate blue tracts, violet zips, gold district, rust boundaries) are
+// hardcoded in the map components as categorical colors and unaffected by these tokens.
 export default {
   content: [
     "./index.html",
@@ -10,67 +13,61 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Schibsted Grotesk"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        display: ['Fraunces', 'Georgia', 'serif'],
-        mono: ['"Space Mono"', 'ui-monospace', 'monospace'],
+        sans: ['"Instrument Sans"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'fade-in-up': {
-          '0%':   { opacity: '0', transform: 'translateY(12px)' },
+          '0%':   { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       animation: {
-        'fade-in-up': 'fade-in-up 0.3s ease-out both',
+        'fade-in-up': 'fade-in-up 0.5s ease-out both',
       },
       colors: {
-        // University of Memphis blue ramp (anchor ~#003087)
+        // Ink: warm charcoal ramp, 900 is near-black for maximum contrast
         primary: {
-          50:  '#eef3fb',
-          100: '#d9e4f6',
-          200: '#b3c9ec',
-          300: '#84a7df',
-          400: '#4f7ecd',
-          500: '#2458b3',
-          600: '#12419c',
-          700: '#003087',
-          800: '#002567',
-          900: '#001b4d',
+          50:  '#f6f6f4',
+          100: '#e8e8e4',
+          200: '#d2d2cb',
+          300: '#b2b3aa',
+          400: '#8b8d84',
+          500: '#6e7069',
+          600: '#575952',
+          700: '#404239',
+          800: '#2a2c26',
+          900: '#191b16',
         },
-        // Stax gold ramp (anchor ~#f0b323)
+        // Terracotta: resident-drawn-line color, the single brand accent
         accent: {
-          50:  '#fdf8ec',
-          100: '#faeecc',
-          200: '#f6df9e',
-          300: '#f2cd67',
-          400: '#f0b323',
-          500: '#d99c14',
-          600: '#b57d0e',
-          700: '#8f5f0c',
-          800: '#6b460d',
-          900: '#4a300b',
+          50:  '#fdf3ee',
+          100: '#fae2d4',
+          200: '#f4c3a8',
+          300: '#ea9c74',
+          400: '#dd7346',
+          500: '#cd5423',
+          600: '#b34418',
+          700: '#933615',
+          800: '#752c16',
+          900: '#5e2513',
         },
-        // Warm rust, reserved for resident-drawn data (heatmap, boundaries, pins)
+        // Rust kept as an alias of the accent family for resident-data map layers
         rust: {
-          50:  '#faf1ec',
-          100: '#f5e0d6',
-          200: '#e8c4b0',
-          300: '#dba88a',
-          400: '#d08c6a',
-          500: '#c96d4f',
-          600: '#b8593a',
-          700: '#9a4a2f',
-          800: '#7c3b25',
-          900: '#5e2d1b',
+          400: '#dd7346',
+          500: '#cd5423',
+          600: '#b34418',
+          700: '#933615',
         },
         surface: {
-          page:  '#f4f7fb',
+          page:  '#faf9f6',
           card:  '#ffffff',
-          muted: '#e9eef6',
+          muted: '#f1f0ea',
         },
         border: {
-          DEFAULT: '#d7dfeb',
-          input:   '#c3cedd',
+          DEFAULT: '#e2e0d8',
+          input:   '#cfccc2',
         },
       },
     },

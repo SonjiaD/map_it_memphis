@@ -9,6 +9,16 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Brand selection + focus: terracotta, high contrast */
+::selection {
+  background: #f4c3a8;
+  color: #191b16;
+}
+:focus-visible {
+  outline: 2px solid #cd5423;
+  outline-offset: 2px;
+}
+
 /* Fix Leaflet tile seam artifacts (white lines between tiles) */
 .leaflet-tile {
   outline: 1px solid transparent;

@@ -1,50 +1,52 @@
 import { useAuth } from '../contexts/AuthContext'
-import { SectionLabel, PageLayout } from '../components/ui'
+import { MapBackdrop } from '../components/MapBackdrop'
 
 export default function ProfilePage() {
   const { user, profile } = useAuth()
+  const name = profile?.full_name || (user?.user_metadata?.full_name as string) || ''
+  const initial = (name.trim()[0] || '?').toUpperCase()
 
   return (
-    <PageLayout>
-      <h1 className="text-3xl font-bold text-gray-900 mb-1">Your Profile</h1>
-      <p className="text-gray-500 mt-1 mb-10">Account details for MAPP It Memphis field researchers.</p>
-
-      <section className="mb-10">
-        <SectionLabel className="mb-1">Account</SectionLabel>
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-16 mt-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Name</p>
-            <p className="text-gray-800 font-medium">{profile?.full_name || user?.user_metadata?.full_name || '—'}</p>
+    <div className="relative flex-1 flex items-center justify-center px-4 py-24">
+      <MapBackdrop />
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="bg-white rounded-2xl shadow-2xl border border-border overflow-hidden">
+          <div className="bg-primary-900 px-8 pt-9 pb-7">
+            <div className="w-16 h-16 rounded-full bg-accent-500 text-white font-display text-3xl flex items-center justify-center mb-4">
+              {initial}
+            </div>
+            <h1 className="font-display text-2xl text-white leading-tight">{name || 'Your profile'}</h1>
+            <p className="font-mono text-[11px] text-primary-300 mt-1">{profile?.email || user?.email}</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Email</p>
-            <p className="text-gray-800 font-medium">{profile?.email || user?.email}</p>
+          <div className="p-8">
+            <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400 mb-3">Data collection access</p>
+            {profile?.is_researcher ? (
+              <>
+                <span className="inline-flex items-center gap-2 bg-accent-50 border border-accent-200 text-accent-700 text-sm font-medium px-3.5 py-1.5 rounded-lg">
+                  <svg viewBox="0 0 20 20" className="w-4 h-4" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Authorized youth researcher
+                </span>
+                <p className="text-sm text-primary-500 leading-relaxed mt-4">
+                  You can collect resident boundaries and asset pins in the field from the Collect page.
+                  Everything you save appears on the public map right away.
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="inline-block bg-surface-muted border border-border text-primary-600 text-sm font-medium px-3.5 py-1.5 rounded-lg">
+                  Not yet authorized
+                </span>
+                <p className="text-sm text-primary-500 leading-relaxed mt-4">
+                  Your account exists but cannot collect field data yet. Contact the study
+                  coordinator to have it authorized.
+                </p>
+              </>
+            )}
           </div>
         </div>
-      </section>
-
-      <section>
-        <SectionLabel className="mb-1">Data collection access</SectionLabel>
-        <div className="mt-4">
-          {profile?.is_researcher ? (
-            <div className="inline-flex items-center gap-2 bg-primary-50 border border-primary-200 text-primary-800 text-sm font-medium px-4 py-2 rounded-full">
-              <svg viewBox="0 0 20 20" className="w-4 h-4 text-primary-700" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Authorized youth researcher
-            </div>
-          ) : (
-            <div>
-              <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium px-4 py-2 rounded-full mb-2">
-                Not yet authorized
-              </div>
-              <p className="text-gray-500 text-sm">
-                Contact the study coordinator to have your account approved for field data collection.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-    </PageLayout>
+      </div>
+    </div>
   )
 }

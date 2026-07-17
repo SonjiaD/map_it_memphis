@@ -1,0 +1,42 @@
+{
+  "type": "FeatureCollection",
+  "source": "Illustrative example boundaries drawn by the project team to demonstrate the method on the Story page. NOT resident data. Replace with real submissions once field collection begins.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "label": "Illustrative example 1" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-90.0435, 35.1215], [-90.0362, 35.1238], [-90.0281, 35.1224], [-90.0212, 35.1187],
+          [-90.0176, 35.1120], [-90.0195, 35.1042], [-90.0261, 35.0982], [-90.0355, 35.0961],
+          [-90.0428, 35.0993], [-90.0464, 35.1063], [-90.0458, 35.1146], [-90.0435, 35.1215]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "label": "Illustrative example 2" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-90.0398, 35.1178], [-90.0311, 35.1201], [-90.0227, 35.1173], [-90.0164, 35.1108],
+          [-90.0152, 35.1021], [-90.0209, 35.0946], [-90.0313, 35.0917], [-90.0409, 35.0951],
+          [-90.0452, 35.1034], [-90.0441, 35.1121], [-90.0398, 35.1178]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "label": "Illustrative example 3" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-90.0372, 35.1252], [-90.0272, 35.1266], [-90.0181, 35.1228], [-90.0135, 35.1141],
+          [-90.0148, 35.1046], [-90.0225, 35.0988], [-90.0331, 35.0975], [-90.0421, 35.1018],
+          [-90.0447, 35.1105], [-90.0421, 35.1199], [-90.0372, 35.1252]
+        ]]
+      }
+    }
+  ]
+}

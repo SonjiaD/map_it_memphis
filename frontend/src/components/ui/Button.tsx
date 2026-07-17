@@ -7,12 +7,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
 }
 
-const base = 'inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed'
+const base = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed'
 
 const variants = {
-  primary:   'bg-primary-700 hover:bg-primary-600 text-white shadow-sm',
-  secondary: 'border-2 border-primary-700 text-primary-700 hover:bg-primary-50',
-  ghost:     'text-primary-700 hover:text-primary-600 hover:bg-primary-50',
+  primary:   'bg-primary-900 hover:bg-primary-700 text-white shadow-sm',
+  secondary: 'border border-primary-900 text-primary-900 hover:bg-primary-50',
+  ghost:     'text-primary-700 hover:text-primary-900 hover:bg-primary-50',
 }
 
 const sizes = {
