@@ -18,73 +18,51 @@ function NavBar() {
     navigate('/')
   }
 
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `relative px-3 py-2 text-sm font-medium transition-colors ${
+      isActive
+        ? 'text-primary-800 after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-400'
+        : 'text-gray-500 hover:text-primary-800'
+    }`
+
   return (
-    <nav className="bg-primary-900 border-b border-primary-800">
+    <nav className="bg-white border-b border-border">
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="text-lg font-semibold text-white tracking-tight">
-          MAPP It Memphis
+        <Link to="/" className="flex items-center gap-2.5">
+          <span className="w-8 h-8 rounded-xl bg-primary-700 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" style={{ width: 17, height: 17 }} className="text-accent-400" fill="currentColor">
+              <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
+            </svg>
+          </span>
+          <span className="font-display font-bold text-lg text-primary-900 tracking-tight">
+            MAPP It Memphis
+          </span>
         </Link>
         <div className="flex items-center gap-1">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
-              }`
-            }
-          >
+          <NavLink to="/" end className={navLinkClass}>
             Explore
           </NavLink>
-          <NavLink
-            to="/about"
-            className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
-              }`
-            }
-          >
+          <NavLink to="/about" className={navLinkClass}>
             About
           </NavLink>
-          <NavLink
-            to="/methodology"
-            className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
-              }`
-            }
-          >
+          <NavLink to="/methodology" className={navLinkClass}>
             Methodology
           </NavLink>
 
           {user && profile?.is_researcher && (
-            <NavLink
-              to="/collect"
-              className={({ isActive }) =>
-                `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
-                }`
-              }
-            >
+            <NavLink to="/collect" className={navLinkClass}>
               Collect
             </NavLink>
           )}
 
           {user ? (
             <>
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    isActive ? 'text-white bg-primary-800' : 'text-primary-100 hover:text-white hover:bg-primary-800'
-                  }`
-                }
-              >
+              <NavLink to="/profile" className={navLinkClass}>
                 Profile
               </NavLink>
               <button
                 onClick={handleSignOut}
-                className="ml-3 px-3 py-1.5 rounded-md text-sm font-medium text-primary-300 hover:text-white hover:bg-primary-800 transition-colors"
+                className="ml-3 px-4 py-1.5 rounded-full text-sm font-medium text-gray-500 border border-border hover:text-primary-800 hover:border-primary-300 transition-colors"
               >
                 Log out
               </button>
@@ -92,7 +70,7 @@ function NavBar() {
           ) : (
             <NavLink
               to="/login"
-              className="ml-3 px-3 py-1.5 rounded-md text-sm font-medium text-primary-300 hover:text-white hover:bg-primary-800 transition-colors"
+              className="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-primary-700 text-white hover:bg-primary-600 transition-colors"
             >
               Researcher Login
             </NavLink>

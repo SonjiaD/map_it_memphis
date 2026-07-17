@@ -102,7 +102,7 @@ export default function CollectPage() {
     return (
       <div className="flex-1 overflow-auto bg-surface-page py-10 px-6">
         <div className="max-w-xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-wider text-teal-600 mb-2">New session</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-primary-700 mb-2">New session</p>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Before you start</h1>
           <p className="text-gray-500 mb-8">
             Read the consent script with the resident, then fill in these few details.
@@ -112,7 +112,7 @@ export default function CollectPage() {
           <button
             onClick={() => setStep('draw')}
             disabled={!respondent.consentGiven}
-            className="mt-8 w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-full transition-colors"
+            className="mt-8 w-full bg-primary-700 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-full transition-colors"
           >
             Start drawing
           </button>
@@ -129,8 +129,8 @@ export default function CollectPage() {
     return (
       <div className="flex-1 flex items-center justify-center bg-surface-page px-6">
         <div className="max-w-md text-center">
-          <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-6">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-6">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -141,7 +141,7 @@ export default function CollectPage() {
           </p>
           <button
             onClick={resetSession}
-            className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-8 py-3.5 rounded-full transition-colors"
+            className="bg-primary-700 hover:bg-primary-600 text-white font-bold px-8 py-3.5 rounded-full transition-colors"
           >
             Start new session
           </button>
@@ -219,7 +219,7 @@ export default function CollectPage() {
               <button
                 onClick={() => setBoundaryClosed(true)}
                 disabled={vertices.length < 3}
-                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white disabled:opacity-40"
+                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white disabled:opacity-40"
               >
                 Finish boundary
               </button>
@@ -234,7 +234,7 @@ export default function CollectPage() {
               </button>
               <button
                 onClick={() => setStep('pins')}
-                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white"
+                className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
               >
                 Continue to pins
               </button>
@@ -262,7 +262,7 @@ export default function CollectPage() {
           )}
           <button
             onClick={() => setStep('review')}
-            className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white"
+            className="min-h-[44px] px-5 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
           >
             Review{pins.length > 0 ? ` (${pins.length} pin${pins.length === 1 ? '' : 's'})` : ''}
           </button>
@@ -282,7 +282,7 @@ export default function CollectPage() {
                     onClick={() => setPendingPin({ ...pendingPin, category: c.key })}
                     className={`min-h-[44px] px-4 rounded-full text-sm font-medium border-2 transition-colors ${
                       pendingPin.category === c.key
-                        ? 'border-teal-500 bg-teal-50 text-teal-700'
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
                         : 'border-gray-200 bg-white text-gray-600'
                     }`}
                   >
@@ -298,7 +298,7 @@ export default function CollectPage() {
                 value={pendingPin.name}
                 onChange={e => setPendingPin({ ...pendingPin, name: e.target.value })}
                 placeholder="e.g. Corner store on Mississippi Blvd"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-teal-400"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500"
               />
             </div>
             <div>
@@ -308,7 +308,7 @@ export default function CollectPage() {
                 onChange={e => setPendingPin({ ...pendingPin, whyItMatters: e.target.value })}
                 placeholder="In the resident's own words"
                 rows={2}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-teal-400"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500"
               />
             </div>
             <div className="flex gap-2">
@@ -320,7 +320,7 @@ export default function CollectPage() {
               </button>
               <button
                 onClick={() => { setPins([...pins, pendingPin]); setPendingPin(null) }}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white"
+                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white"
               >
                 Save pin
               </button>
@@ -375,7 +375,7 @@ export default function CollectPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white disabled:opacity-60"
+                className="min-h-[44px] flex-1 rounded-full text-sm font-bold bg-primary-700 hover:bg-primary-600 text-white disabled:opacity-60"
               >
                 {saving ? 'Saving…' : 'Save session'}
               </button>

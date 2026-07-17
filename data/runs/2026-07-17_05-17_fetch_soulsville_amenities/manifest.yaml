@@ -1,0 +1,8 @@
+script: fetch_soulsville_amenities
+generated_at: '2026-07-17T05:17:55.213464+00:00'
+counts:
+  schools:
+    features: 195
+    kb: 42.8
+notes: OSM/Overpass source. Swap libraries/community_centers/transit for DataMidSouth's
+  curated datasets via --from-file if manually downloaded.

@@ -14,11 +14,12 @@ function AboutSection({ label, children }: { label: string; children: React.Reac
 export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-full bg-surface-page">
-      <div className="bg-primary-900 px-6 py-12">
-        <div className="max-w-4xl mx-auto">
-          <SectionLabel className="text-teal-400 mb-3">Soulsville, Memphis</SectionLabel>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">About MAPP It Memphis</h1>
-          <p className="text-teal-300 leading-relaxed max-w-2xl">
+      <div className="bg-primary-900 px-6 py-14 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-primary-700/40" />
+        <div className="max-w-4xl mx-auto relative z-10">
+          <SectionLabel className="text-accent-400 mb-3">Soulsville, Memphis</SectionLabel>
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-white mb-3">About MAPP It Memphis</h1>
+          <p className="text-primary-200 leading-relaxed max-w-2xl">
             Measuring Assets, People, and Places: a youth-led project mapping Soulsville
             the way its residents actually see it.
           </p>
@@ -71,8 +72,8 @@ export default function AboutPage() {
 
         <AboutSection label="Explore">
           <p className="text-gray-600 leading-relaxed">
-            Start with the <Link to="/" className="text-teal-700 hover:text-teal-600 font-medium">interactive map</Link>,
-            or read about <Link to="/methodology" className="text-teal-700 hover:text-teal-600 font-medium">how the boundaries are compared</Link>.
+            Start with the <Link to="/" className="text-primary-600 hover:text-primary-500 font-medium">interactive map</Link>,
+            or read about <Link to="/methodology" className="text-primary-600 hover:text-primary-500 font-medium">how the boundaries are compared</Link>.
           </p>
         </AboutSection>
       </div>

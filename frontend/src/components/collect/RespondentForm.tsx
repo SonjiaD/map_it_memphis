@@ -61,16 +61,16 @@ export function RespondentForm({ value, onChange }: {
           onChange={e => onChange({ ...value, notes: e.target.value })}
           placeholder="Anything worth remembering about this session. No names or identifying details."
           rows={3}
-          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
+          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
         />
       </div>
 
-      <label className="flex items-start gap-3 bg-teal-50 border border-teal-200 rounded-xl px-4 py-3.5 cursor-pointer select-none">
+      <label className="flex items-start gap-3 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3.5 cursor-pointer select-none">
         <input
           type="checkbox"
           checked={value.consentGiven}
           onChange={e => onChange({ ...value, consentGiven: e.target.checked })}
-          className="accent-teal-600 w-5 h-5 mt-0.5 shrink-0"
+          className="accent-primary-700 w-5 h-5 mt-0.5 shrink-0"
         />
         <span className="text-sm text-gray-700 leading-relaxed">
           The resident has heard the consent script, understands their drawing and pins

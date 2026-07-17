@@ -10,9 +10,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const base = 'inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed'
 
 const variants = {
-  primary:   'bg-teal-500 hover:bg-teal-400 text-white shadow-sm',
-  secondary: 'border-2 border-teal-500 text-teal-600 hover:bg-teal-50',
-  ghost:     'text-teal-600 hover:text-teal-500 hover:bg-teal-50',
+  primary:   'bg-primary-700 hover:bg-primary-600 text-white shadow-sm',
+  secondary: 'border-2 border-primary-700 text-primary-700 hover:bg-primary-50',
+  ghost:     'text-primary-700 hover:text-primary-600 hover:bg-primary-50',
 }
 
 const sizes = {

@@ -48,7 +48,7 @@ export function ResearcherGuard({ children }: { children: ReactNode }) {
             Your account exists but has not been approved for field data collection yet.
             Contact the study coordinator to have your account authorized.
           </p>
-          <Link to="/" className="inline-block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors">
+          <Link to="/" className="inline-block bg-primary-700 hover:bg-primary-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors">
             Back to the map
           </Link>
         </div>

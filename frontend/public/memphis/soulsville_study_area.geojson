@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "source": "Approximate study-area extent used by the MAPP It Memphis project team. Soulsville has no official boundary; defining it from residents' perspectives is the point of the research. This outline only orients visitors to where the study focuses.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Soulsville study area",
+        "approximate": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-90.045, 35.085],
+            [-90.000, 35.085],
+            [-90.000, 35.125],
+            [-90.045, 35.125],
+            [-90.045, 35.085]
+          ]
+        ]
+      }
+    }
+  ]
+}

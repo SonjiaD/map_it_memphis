@@ -32,7 +32,7 @@ import requests
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from data_pipeline.config import SOULSVILLE_SW, SOULSVILLE_NE  # noqa: E402
+from data_pipeline.config import BOUNDARY_CLIP_SW, BOUNDARY_CLIP_NE  # noqa: E402
 import run_history  # noqa: E402
 
 SCRIPT_NAME = "fetch_soulsville_amenities"
@@ -41,15 +41,23 @@ TRANSIT_DIR = ROOT / "frontend" / "public" / "memphis" / "transit"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 HEADERS = {"User-Agent": "mapp-memphis-research/1.0 (soulsville participatory mapping project)"}
 
-# Overpass bbox order: (south, west, north, east) = (min_lat, min_lng, max_lat, max_lng)
-BBOX = f"{SOULSVILLE_SW[0]},{SOULSVILLE_SW[1]},{SOULSVILLE_NE[0]},{SOULSVILLE_NE[1]}"
+# Overpass bbox order: (south, west, north, east) = (min_lat, min_lng, max_lat, max_lng).
+# Uses the wide boundary-clip window (not just the small Soulsville bbox) so amenity pins
+# cover the same extent as the official boundary layers on the public map.
+BBOX = f"{BOUNDARY_CLIP_SW[0]},{BOUNDARY_CLIP_SW[1]},{BOUNDARY_CLIP_NE[0]},{BOUNDARY_CLIP_NE[1]}"
 
 RETRY_ATTEMPTS = 3
 RETRY_BACKOFF_S = [5, 15, 45]
 
-# category -> Overpass tag filters (each becomes one `nwr[key=value](bbox);` clause)
+# category -> Overpass tag filters (each becomes one `nwr[key=value](bbox);` clause).
+# Grocery includes shop=convenience/greengrocer and amenity=marketplace because South
+# Memphis corner stores are tagged that way in OSM; true supermarkets are rare there
+# (the area is a documented food desert), so supermarket-only queries return nothing.
 CATEGORIES = {
-    "grocery": {"output": "grocery.geojson", "tags": [("shop", "supermarket"), ("shop", "grocery")]},
+    "grocery": {"output": "grocery.geojson", "tags": [
+        ("shop", "supermarket"), ("shop", "grocery"), ("shop", "convenience"),
+        ("shop", "greengrocer"), ("amenity", "marketplace"),
+    ]},
     "parks": {"output": "parks.geojson", "tags": [("leisure", "park"), ("leisure", "garden")]},
     "community_centers": {"output": "community_centers.geojson", "tags": [("amenity", "community_centre")]},
     "libraries": {"output": "libraries.geojson", "tags": [("amenity", "library")]},
@@ -94,7 +102,8 @@ def elements_to_points(elements: list, name_field: str = "name") -> dict:
                 "osm_type": el["type"],
                 "osm_id": el["id"],
                 "name": tags.get(name_field),
-                **{k: v for k, v in tags.items() if k in ("addr:housenumber", "addr:street", "phone", "website")},
+                # shop/amenity kept as a category hint (e.g. supermarket vs convenience)
+                **{k: v for k, v in tags.items() if k in ("addr:housenumber", "addr:street", "phone", "website", "shop", "amenity")},
             },
             "geometry": {"type": "Point", "coordinates": [lon, lat]},
         })

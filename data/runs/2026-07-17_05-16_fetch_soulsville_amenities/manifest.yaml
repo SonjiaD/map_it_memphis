@@ -1,0 +1,8 @@
+script: fetch_soulsville_amenities
+generated_at: '2026-07-17T05:16:49.461093+00:00'
+counts:
+  libraries:
+    features: 19
+    kb: 5.9
+notes: OSM/Overpass source. Swap libraries/community_centers/transit for DataMidSouth's
+  curated datasets via --from-file if manually downloaded.

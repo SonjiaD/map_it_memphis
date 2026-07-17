@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+// MAPP It Memphis theme: University of Memphis blue (primary) + Stax-gold accent,
+// with a warm rust ramp reserved for resident-drawn data layers so resident data
+// always reads warm against the cool official blues.
 export default {
   content: [
     "./index.html",
@@ -7,7 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['"Schibsted Grotesk"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
+        mono: ['"Space Mono"', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'fade-in-up': {
@@ -19,19 +24,34 @@ export default {
         'fade-in-up': 'fade-in-up 0.3s ease-out both',
       },
       colors: {
+        // University of Memphis blue ramp (anchor ~#003087)
         primary: {
-          50:  '#eef6f5',
-          100: '#dceeed',
-          200: '#b5d9d6',
-          300: '#8ec4bf',
-          400: '#5a9e9e',
-          500: '#3d8888',
-          600: '#357575',
-          700: '#2d6363',
-          800: '#234e4e',
-          900: '#1a3a3a',
+          50:  '#eef3fb',
+          100: '#d9e4f6',
+          200: '#b3c9ec',
+          300: '#84a7df',
+          400: '#4f7ecd',
+          500: '#2458b3',
+          600: '#12419c',
+          700: '#003087',
+          800: '#002567',
+          900: '#001b4d',
         },
+        // Stax gold ramp (anchor ~#f0b323)
         accent: {
+          50:  '#fdf8ec',
+          100: '#faeecc',
+          200: '#f6df9e',
+          300: '#f2cd67',
+          400: '#f0b323',
+          500: '#d99c14',
+          600: '#b57d0e',
+          700: '#8f5f0c',
+          800: '#6b460d',
+          900: '#4a300b',
+        },
+        // Warm rust, reserved for resident-drawn data (heatmap, boundaries, pins)
+        rust: {
           50:  '#faf1ec',
           100: '#f5e0d6',
           200: '#e8c4b0',
@@ -44,13 +64,13 @@ export default {
           900: '#5e2d1b',
         },
         surface: {
-          page:  '#f8f7f5',
+          page:  '#f4f7fb',
           card:  '#ffffff',
-          muted: '#f1efec',
+          muted: '#e9eef6',
         },
         border: {
-          DEFAULT: '#d8d4cf',
-          input:   '#c5c0b9',
+          DEFAULT: '#d7dfeb',
+          input:   '#c3cedd',
         },
       },
     },

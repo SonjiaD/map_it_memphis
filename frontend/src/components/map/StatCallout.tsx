@@ -19,16 +19,19 @@ export function StatCallout({ heatmap, boundaryCount }: {
   if (boundaryCount === 0) return null
 
   return (
-    <div className="absolute bottom-6 right-3 z-[1000] bg-primary-900/95 text-white rounded-xl shadow-lg px-4 py-3 max-w-[240px]">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-teal-400 mb-1">Resident vs official</p>
+    <div className="absolute bottom-24 right-4 z-[1000] bg-white rounded-2xl shadow-xl border border-border px-5 py-4 max-w-[250px]">
+      <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-400 mb-1.5">Resident vs official</p>
       {overlapPct !== null ? (
-        <p className="text-sm leading-snug">
-          <span className="text-2xl font-bold">{overlapPct}%</span>{' '}
-          of the resident-drawn consensus area falls inside the official South District boundary
-        </p>
+        <>
+          <p className="font-display font-bold text-4xl text-primary-700 leading-none mb-1.5">{overlapPct}%</p>
+          <p className="text-xs text-gray-500 leading-snug">
+            of the resident-drawn consensus area falls inside the official South District boundary
+          </p>
+        </>
       ) : (
-        <p className="text-sm leading-snug text-teal-200">
-          {boundaryCount} resident boundar{boundaryCount === 1 ? 'y' : 'ies'} collected so far
+        <p className="text-sm text-gray-600 leading-snug">
+          <span className="font-display font-bold text-2xl text-primary-700">{boundaryCount}</span>{' '}
+          resident boundar{boundaryCount === 1 ? 'y' : 'ies'} collected so far
         </p>
       )}
     </div>

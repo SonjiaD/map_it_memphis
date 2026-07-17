@@ -27,8 +27,8 @@ export default function ProfilePage() {
         <SectionLabel className="mb-1">Data collection access</SectionLabel>
         <div className="mt-4">
           {profile?.is_researcher ? (
-            <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-800 text-sm font-medium px-4 py-2 rounded-full">
-              <svg viewBox="0 0 20 20" className="w-4 h-4 text-teal-600" fill="currentColor">
+            <div className="inline-flex items-center gap-2 bg-primary-50 border border-primary-200 text-primary-800 text-sm font-medium px-4 py-2 rounded-full">
+              <svg viewBox="0 0 20 20" className="w-4 h-4 text-primary-700" fill="currentColor">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Authorized youth researcher

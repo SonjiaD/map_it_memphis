@@ -1,40 +1,61 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapContainer, TileLayer } from 'react-leaflet'
+import { MapContainer, TileLayer, ZoomControl } from 'react-leaflet'
 import { LayerTogglePanel, DEFAULT_LAYER_STATE, type LayerState } from '../components/map/LayerTogglePanel'
-import { CensusTractsLayer, ZipCodesLayer, SouthDistrictLayer } from '../components/map/OfficialLayers'
+import { CensusTractsLayer, ZipCodesLayer, SouthDistrictLayer, SoulsvilleStudyAreaLayer } from '../components/map/OfficialLayers'
 import { AmenityLayer } from '../components/map/AmenityLayer'
 import { TransitLayer } from '../components/map/TransitLayer'
 import { KnowledgeQuestMarker } from '../components/map/KnowledgeQuestMarker'
 import { ConsensusHeatmapLayer, DrawnBoundariesLayer, AssetPinsLayer } from '../components/map/ResidentLayers'
 import { StatCallout } from '../components/map/StatCallout'
+import { Legend } from '../components/map/Legend'
 import { AMENITY_CATEGORIES } from '../components/map/pins'
 import { useDrawnBoundaries } from '../hooks/useDrawnBoundaries'
 import { computeHeatmap } from '../lib/consensusHeatmap'
 
 const SOULSVILLE_CENTER: [number, number] = [35.104, -90.025]
+// Keep visitors around Memphis: padded clip bbox, matching the data extent
+const MAX_BOUNDS: [[number, number], [number, number]] = [[34.85, -90.35], [35.35, -89.70]]
 const WELCOME_DISMISSED_KEY = 'mapp-welcome-dismissed'
 
 function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="absolute bottom-6 left-3 z-[1000] max-w-sm bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-      <h2 className="font-bold text-gray-900 mb-1.5">What is MAPP It Memphis?</h2>
-      <p className="text-sm text-gray-600 leading-relaxed mb-3">
-        Soulsville residents draw their own neighborhood boundary and mark the places
-        that matter to them. This map shows how their answers compare with official
-        lines like census tracts and zip codes. Use the layer panel to explore.
+    <div className="absolute top-4 left-4 z-[1000] max-w-sm bg-white rounded-2xl shadow-xl border border-border p-5">
+      <div className="flex items-center gap-2.5 mb-2">
+        <span className="w-8 h-8 rounded-xl bg-primary-700 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-accent-400" fill="currentColor" style={{ width: 18, height: 18 }}>
+            <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
+          </svg>
+        </span>
+        <h2 className="font-display font-bold text-lg text-primary-900">Whose Soulsville?</h2>
+      </div>
+      <p className="text-sm text-gray-600 leading-relaxed mb-2.5">
+        Residents draw their own neighborhood boundary and mark the places that matter
+        to them. This map compares their answers with official lines.
+      </p>
+      <p className="text-xs text-gray-400 leading-relaxed mb-3.5">
+        Blue outlines are census tracts. The dashed rust box is the approximate study
+        area. Open the layer panel to explore more.
       </p>
       <div className="flex items-center gap-3">
         <button
           onClick={onDismiss}
-          className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
+          className="bg-primary-700 hover:bg-primary-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
         >
-          Got it
+          Explore the map
         </button>
-        <Link to="/about" className="text-sm text-teal-700 hover:text-teal-600 font-medium">
-          Learn more
+        <Link to="/about" className="text-sm text-primary-600 hover:text-primary-500 font-medium">
+          About the project
         </Link>
       </div>
+    </div>
+  )
+}
+
+function EmptyResidentDataToast() {
+  return (
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm px-5 py-2.5 rounded-full shadow-lg">
+      No resident submissions yet. Youth researchers are collecting data now.
     </div>
   )
 }
@@ -53,6 +74,8 @@ export default function ExplorePage() {
     [boundaries],
   )
 
+  const residentLayerOn = layers.residentHeatmap || layers.residentBoundaries || layers.residentPins
+
   function dismissWelcome() {
     localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
     setShowWelcome(false)
@@ -63,17 +86,23 @@ export default function ExplorePage() {
       <MapContainer
         center={SOULSVILLE_CENTER}
         zoom={14}
+        minZoom={11}
+        maxBounds={MAX_BOUNDS}
+        maxBoundsViscosity={0.8}
         className="absolute inset-0"
-        zoomControl={true}
+        zoomControl={false}
       >
+        <ZoomControl position="bottomright" />
+        {/* CARTO Positron: light desaturated basemap so data layers stay legible */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
         {layers.censusTracts && <CensusTractsLayer />}
         {layers.zipCodes && <ZipCodesLayer />}
         {layers.southDistrict && <SouthDistrictLayer />}
+        {layers.studyArea && <SoulsvilleStudyAreaLayer />}
 
         {AMENITY_CATEGORIES.map(cat =>
           layers.amenities[cat.key] ? <AmenityLayer key={cat.key} category={cat} /> : null,
@@ -87,7 +116,9 @@ export default function ExplorePage() {
         {layers.residentPins && <AssetPinsLayer />}
       </MapContainer>
 
-      <LayerTogglePanel layers={layers} onChange={setLayers} />
+      <LayerTogglePanel layers={layers} onChange={setLayers} residentBoundaryCount={boundaries.length} />
+      <Legend layers={layers} />
+      {residentLayerOn && boundaries.length === 0 && <EmptyResidentDataToast />}
       {(layers.residentHeatmap || layers.residentBoundaries) && (
         <StatCallout heatmap={heatmap} boundaryCount={boundaries.length} />
       )}

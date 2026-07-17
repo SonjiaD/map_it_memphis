@@ -1,0 +1,11 @@
+script: fetch_soulsville_amenities
+generated_at: '2026-07-17T05:18:56.416471+00:00'
+counts:
+  transit_stops:
+    features: 0
+    kb: 0.1
+  transit_routes:
+    features: 62
+    kb: 1444.4
+notes: OSM/Overpass source. Swap libraries/community_centers/transit for DataMidSouth's
+  curated datasets via --from-file if manually downloaded.
