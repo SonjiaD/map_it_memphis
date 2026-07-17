@@ -41,6 +41,7 @@ const START_ZOOM = 13
 type Step = 'info' | 'draw' | 'pins' | 'review' | 'saved'
 
 interface DraftPin {
+  id: string
   lat: number
   lng: number
   category: string
@@ -184,8 +185,8 @@ export default function CollectPage() {
     <div className="relative flex-1 min-h-0">
       <MapContainer center={START_CENTER} zoom={START_ZOOM} className="absolute inset-0">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
         {step === 'draw' && (
@@ -206,11 +207,11 @@ export default function CollectPage() {
         )}
 
         {step === 'pins' && !pendingPin && (
-          <PinTapCapture onTap={latlng => setPendingPin({ lat: latlng.lat, lng: latlng.lng, category: 'grocery', name: '', whyItMatters: '' })} />
+          <PinTapCapture onTap={latlng => setPendingPin({ id: crypto.randomUUID(), lat: latlng.lat, lng: latlng.lng, category: 'grocery', name: '', whyItMatters: '' })} />
         )}
 
-        {pins.map((p, i) => (
-          <Marker key={i} position={[p.lat, p.lng]} icon={assetPinIcon(p.category)} />
+        {pins.map(p => (
+          <Marker key={p.id} position={[p.lat, p.lng]} icon={assetPinIcon(p.category)} />
         ))}
         {pendingPin && (
           <Marker position={[pendingPin.lat, pendingPin.lng]} icon={assetPinIcon(pendingPin.category)} opacity={0.7} />
@@ -237,14 +238,14 @@ export default function CollectPage() {
               <button
                 onClick={() => setVertices(vertices.slice(0, -1))}
                 disabled={vertices.length === 0}
-                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-primary-600 hover:bg-surface-muted disabled:opacity-40"
               >
                 Undo
               </button>
               <button
                 onClick={() => setVertices([])}
                 disabled={vertices.length === 0}
-                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-primary-600 hover:bg-surface-muted disabled:opacity-40"
               >
                 Clear
               </button>
@@ -260,7 +261,7 @@ export default function CollectPage() {
             <>
               <button
                 onClick={() => { setBoundaryClosed(false); setVertices([]) }}
-                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
+                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-primary-600 hover:bg-surface-muted"
               >
                 Redraw
               </button>
@@ -280,14 +281,14 @@ export default function CollectPage() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 bg-white rounded-xl shadow-lg border border-border px-3 py-2">
           <button
             onClick={() => setStep('draw')}
-            className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
+            className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-primary-600 hover:bg-surface-muted"
           >
             Back
           </button>
           {pins.length > 0 && (
             <button
               onClick={() => setPins(pins.slice(0, -1))}
-              className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100"
+              className="min-h-[44px] px-4 rounded-lg text-sm font-semibold text-primary-600 hover:bg-surface-muted"
             >
               Remove last pin
             </button>
@@ -306,7 +307,7 @@ export default function CollectPage() {
         <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-border p-5 max-h-[60%] overflow-auto">
           <div className="max-w-xl mx-auto flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">What kind of place is this?</label>
+              <label className="block text-sm font-semibold text-primary-700 mb-2">What kind of place is this?</label>
               <div className="flex flex-wrap gap-2">
                 {ASSET_PIN_CATEGORIES.map(c => (
                   <button
@@ -315,7 +316,7 @@ export default function CollectPage() {
                     className={`min-h-[44px] px-4 rounded-lg text-sm font-medium border-2 transition-colors ${
                       pendingPin.category === c.key
                         ? 'border-primary-500 bg-primary-50 text-primary-700'
-                        : 'border-gray-200 bg-white text-gray-600'
+                        : 'border-border bg-white text-primary-600'
                     }`}
                   >
                     {c.label}
@@ -324,29 +325,29 @@ export default function CollectPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Name (optional)</label>
+              <label className="block text-sm font-semibold text-primary-700 mb-1.5">Name (optional)</label>
               <input
                 type="text"
                 value={pendingPin.name}
                 onChange={e => setPendingPin({ ...pendingPin, name: e.target.value })}
                 placeholder="e.g. Corner store on Mississippi Blvd"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500"
+                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-primary-900 placeholder-primary-300 text-sm focus:outline-none focus:border-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Why does this place matter?</label>
+              <label className="block text-sm font-semibold text-primary-700 mb-1.5">Why does this place matter?</label>
               <textarea
                 value={pendingPin.whyItMatters}
                 onChange={e => setPendingPin({ ...pendingPin, whyItMatters: e.target.value })}
                 placeholder="In the resident's own words"
                 rows={2}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500"
+                className="w-full bg-white border border-border rounded-xl px-4 py-3 text-primary-900 placeholder-primary-300 text-sm focus:outline-none focus:border-primary-500"
               />
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setPendingPin(null)}
-                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-gray-600 border border-border hover:bg-gray-50"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-primary-600 border border-border hover:bg-surface-muted"
               >
                 Discard
               </button>
@@ -366,19 +367,19 @@ export default function CollectPage() {
         <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-border p-5 max-h-[65%] overflow-auto">
           <div className="max-w-xl mx-auto">
             <h2 className="font-display text-xl text-primary-900 mb-3">Review session</h2>
-            <div className="text-sm text-gray-600 space-y-1.5 mb-4">
-              <p><span className="font-semibold text-gray-800">Boundary:</span> {vertices.length} points</p>
-              <p><span className="font-semibold text-gray-800">Respondent:</span> {respondent.relationship}, age {respondent.ageRange}, {respondent.yearsInNeighborhood.toLowerCase()} in the neighborhood</p>
-              <p><span className="font-semibold text-gray-800">Consent:</span> recorded</p>
+            <div className="text-sm text-primary-600 space-y-1.5 mb-4">
+              <p><span className="font-semibold text-primary-900">Boundary:</span> {vertices.length} points</p>
+              <p><span className="font-semibold text-primary-900">Respondent:</span> {respondent.relationship}, age {respondent.ageRange}, {respondent.yearsInNeighborhood.toLowerCase()} in the neighborhood</p>
+              <p><span className="font-semibold text-primary-900">Consent:</span> recorded</p>
               {pins.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-gray-800 mb-1">{pins.length} pin{pins.length === 1 ? '' : 's'}:</p>
+                  <p className="font-semibold text-primary-900 mb-1">{pins.length} pin{pins.length === 1 ? '' : 's'}:</p>
                   <ul className="space-y-1 pl-1">
-                    {pins.map((p, i) => (
-                      <li key={i} className="flex items-center justify-between gap-2">
+                    {pins.map(p => (
+                      <li key={p.id} className="flex items-center justify-between gap-2">
                         <span>{categoryLabel(p.category)}{p.name ? `: ${p.name}` : ''}</span>
                         <button
-                          onClick={() => setPins(pins.filter((_, j) => j !== i))}
+                          onClick={() => setPins(pins.filter(x => x.id !== p.id))}
                           className="text-red-500 hover:text-red-600 text-xs font-semibold px-2 py-1"
                         >
                           Remove
@@ -388,7 +389,7 @@ export default function CollectPage() {
                   </ul>
                 </div>
               ) : (
-                <p className="text-gray-400">No asset pins this session.</p>
+                <p className="text-primary-400">No asset pins this session.</p>
               )}
             </div>
 
@@ -400,7 +401,7 @@ export default function CollectPage() {
               <button
                 onClick={() => setStep('pins')}
                 disabled={saving}
-                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-gray-600 border border-border hover:bg-gray-50 disabled:opacity-40"
+                className="min-h-[44px] flex-1 rounded-lg text-sm font-semibold text-primary-600 border border-border hover:bg-surface-muted disabled:opacity-40"
               >
                 Back
               </button>

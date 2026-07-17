@@ -77,7 +77,7 @@ function ChapterCard({ chapter, isActive, innerRef }: {
         )}
         {chapter.kicker === 'Chapter five' && (
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/" className="px-5 py-2.5 rounded-lg bg-primary-900 hover:bg-primary-700 text-white text-sm font-semibold transition-colors">
+            <Link to="/?data=1" className="px-5 py-2.5 rounded-lg bg-primary-900 hover:bg-primary-700 text-white text-sm font-semibold transition-colors">
               Explore the live map
             </Link>
             <a href="#method" className="px-5 py-2.5 rounded-lg border border-primary-900 text-primary-900 hover:bg-primary-50 text-sm font-semibold transition-colors">
@@ -297,7 +297,7 @@ export default function StoryPage() {
           <Editorial className="max-w-2xl mx-auto text-center relative z-10">
             <h2 className="font-display text-4xl md:text-5xl text-white mb-4">See the map residents are drawing.</h2>
             <p className="text-primary-200 mb-8">Official lines, resident lines, and the places in between.</p>
-            <Link to="/" className="inline-block px-7 py-3 rounded-lg bg-accent-500 hover:bg-accent-400 text-white font-semibold transition-colors">
+            <Link to="/?data=1" className="inline-block px-7 py-3 rounded-lg bg-accent-500 hover:bg-accent-400 text-white font-semibold transition-colors">
               Explore the live map
             </Link>
           </Editorial>

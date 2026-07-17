@@ -28,7 +28,7 @@ export function RespondentForm({ value, onChange }: {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Age range</label>
+        <label className="block text-sm font-semibold text-primary-700 mb-1.5">Age range</label>
         <CustomSelect
           options={AGE_RANGES}
           value={value.ageRange}
@@ -37,7 +37,7 @@ export function RespondentForm({ value, onChange }: {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Years in the neighborhood</label>
+        <label className="block text-sm font-semibold text-primary-700 mb-1.5">Years in the neighborhood</label>
         <CustomSelect
           options={YEARS_OPTIONS}
           value={value.yearsInNeighborhood}
@@ -46,7 +46,7 @@ export function RespondentForm({ value, onChange }: {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Connection to Soulsville</label>
+        <label className="block text-sm font-semibold text-primary-700 mb-1.5">Connection to Soulsville</label>
         <CustomSelect
           options={RELATIONSHIPS}
           value={value.relationship}
@@ -55,13 +55,13 @@ export function RespondentForm({ value, onChange }: {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Session notes (optional)</label>
+        <label className="block text-sm font-semibold text-primary-700 mb-1.5">Session notes (optional)</label>
         <textarea
           value={value.notes}
           onChange={e => onChange({ ...value, notes: e.target.value })}
           placeholder="Anything worth remembering about this session. No names or identifying details."
           rows={3}
-          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+          className="w-full bg-white border border-border rounded-xl px-4 py-3 text-primary-900 placeholder-primary-300 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
         />
       </div>
 
@@ -72,7 +72,7 @@ export function RespondentForm({ value, onChange }: {
           onChange={e => onChange({ ...value, consentGiven: e.target.checked })}
           className="accent-primary-700 w-5 h-5 mt-0.5 shrink-0"
         />
-        <span className="text-sm text-gray-700 leading-relaxed">
+        <span className="text-sm text-primary-700 leading-relaxed">
           The resident has heard the consent script, understands their drawing and pins
           will appear on a public map with no identifying details, and agrees to take part.
         </span>

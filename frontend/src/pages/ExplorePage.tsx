@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { MapContainer, TileLayer, ZoomControl } from 'react-leaflet'
 import { LayerTogglePanel, DEFAULT_LAYER_STATE, type LayerState } from '../components/map/LayerTogglePanel'
 import { CensusTractsLayer, ZipCodesLayer, SouthDistrictLayer, SoulsvilleStudyAreaLayer } from '../components/map/OfficialLayers'
@@ -12,6 +12,7 @@ import { Legend } from '../components/map/Legend'
 import { AMENITY_CATEGORIES } from '../components/map/pins'
 import { useDrawnBoundaries } from '../hooks/useDrawnBoundaries'
 import { computeHeatmap } from '../lib/consensusHeatmap'
+import { useAuth } from '../contexts/AuthContext'
 
 const SOULSVILLE_CENTER: [number, number] = [35.104, -90.025]
 // Keep visitors around Memphis: padded clip bbox, matching the data extent
@@ -52,16 +53,38 @@ function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function EmptyResidentDataToast() {
+function EmptyResidentDataCard({ signedIn }: { signedIn: boolean }) {
   return (
-    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm px-5 py-2.5 rounded-xl shadow-lg">
-      No resident submissions yet. Youth researchers are collecting data now.
+    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] w-[min(92vw,26rem)] bg-primary-900 text-white rounded-xl shadow-lg px-5 py-4">
+      <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-accent-300 mb-1.5">No resident drawings yet</p>
+      <p className="text-sm leading-relaxed text-primary-100">
+        Youth researchers are collecting resident-drawn boundaries now. They will appear
+        here as they come in.
+      </p>
+      <div className="flex items-center gap-4 mt-3">
+        <Link to="/story#method" className="text-sm font-semibold text-white hover:text-accent-300 transition-colors">
+          See how it works
+        </Link>
+        {signedIn && (
+          <Link to="/collect" className="text-sm font-semibold text-accent-300 hover:text-accent-200 transition-colors">
+            Start collecting
+          </Link>
+        )}
+      </div>
     </div>
   )
 }
 
 export default function ExplorePage() {
-  const [layers, setLayers] = useState<LayerState>(DEFAULT_LAYER_STATE)
+  const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  // Arriving from the Story CTA (/?data=1) pre-enables the resident layers so the
+  // "residents draw it differently" payoff is the first thing you see.
+  const [layers, setLayers] = useState<LayerState>(() =>
+    searchParams.get('data') === '1'
+      ? { ...DEFAULT_LAYER_STATE, residentHeatmap: true, residentBoundaries: true }
+      : DEFAULT_LAYER_STATE,
+  )
   const [showWelcome, setShowWelcome] = useState(
     () => !localStorage.getItem(WELCOME_DISMISSED_KEY),
   )
@@ -73,6 +96,17 @@ export default function ExplorePage() {
     () => computeHeatmap(boundaries.map(b => b.geometry)),
     [boundaries],
   )
+
+  // The first time real resident data arrives, reveal the consensus + boundaries so
+  // the map teaches the thesis on its own. Runs once, so it never fights a visitor
+  // who then toggles the layers back off.
+  const autoRevealed = useRef(false)
+  useEffect(() => {
+    if (!autoRevealed.current && boundaries.length > 0) {
+      autoRevealed.current = true
+      setLayers(prev => ({ ...prev, residentHeatmap: true, residentBoundaries: true }))
+    }
+  }, [boundaries.length])
 
   const residentLayerOn = layers.residentHeatmap || layers.residentBoundaries || layers.residentPins
 
@@ -118,7 +152,7 @@ export default function ExplorePage() {
 
       <LayerTogglePanel layers={layers} onChange={setLayers} residentBoundaryCount={boundaries.length} />
       <Legend layers={layers} />
-      {residentLayerOn && boundaries.length === 0 && <EmptyResidentDataToast />}
+      {residentLayerOn && boundaries.length === 0 && <EmptyResidentDataCard signedIn={!!user} />}
       {(layers.residentHeatmap || layers.residentBoundaries) && (
         <StatCallout heatmap={heatmap} boundaryCount={boundaries.length} />
       )}
