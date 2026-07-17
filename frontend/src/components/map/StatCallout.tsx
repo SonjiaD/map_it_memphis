@@ -23,14 +23,14 @@ export function StatCallout({ heatmap, boundaryCount }: {
       <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-400 mb-1.5">Resident vs official</p>
       {overlapPct !== null ? (
         <>
-          <p className="font-display font-bold text-4xl text-primary-700 leading-none mb-1.5">{overlapPct}%</p>
+          <p className="font-display text-5xl text-accent-600 leading-none mb-1.5">{overlapPct}%</p>
           <p className="text-xs text-gray-500 leading-snug">
             of the resident-drawn consensus area falls inside the official South District boundary
           </p>
         </>
       ) : (
         <p className="text-sm text-gray-600 leading-snug">
-          <span className="font-display font-bold text-2xl text-primary-700">{boundaryCount}</span>{' '}
+          <span className="font-display text-3xl text-accent-600">{boundaryCount}</span>{' '}
           resident boundar{boundaryCount === 1 ? 'y' : 'ies'} collected so far
         </p>
       )}

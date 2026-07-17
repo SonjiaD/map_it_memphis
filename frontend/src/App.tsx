@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { AuthGuard, ResearcherGuard } from './components/AuthGuard'
+import { AuthGuard } from './components/AuthGuard'
 import { NavBar } from './components/NavBar'
 import StoryPage from './pages/StoryPage'
 import ExplorePage from './pages/ExplorePage'
@@ -26,7 +26,9 @@ function AppShell() {
           <Route path="/methodology" element={<Navigate to="/story#method" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/collect" element={<ResearcherGuard><CollectPage /></ResearcherGuard>} />
+          {/* Open collection: any signed-in account can collect for now. Display on
+              the public map is curated separately via is_published (see AuthContext). */}
+          <Route path="/collect" element={<AuthGuard><CollectPage /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

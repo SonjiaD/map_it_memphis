@@ -87,7 +87,7 @@ function Toggle({ label, checked, onChange, swatch, dashed, url }: {
           ? <span className="w-3.5 h-0 shrink-0 border-t-2 border-dashed" style={{ borderColor: swatch }} />
           : <span className="w-3 h-3 rounded-full shrink-0" style={{ background: swatch }} />
       )}
-      <span className="truncate">{label}</span>
+      <span className="leading-tight">{label}</span>
       <StatusBadge url={url} />
     </label>
   )
@@ -123,7 +123,7 @@ export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="absolute top-4 right-4 z-[1000] w-64">
+    <div className="absolute top-24 right-4 z-[1000] w-72">
       <div className="bg-white rounded-2xl shadow-xl border border-border overflow-hidden">
         <button
           onClick={() => setOpen(!open)}
@@ -166,7 +166,7 @@ export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
                 onChange={v => onChange({ ...layers, residentPins: v })} />
             </Group>
 
-            <Group title="Community assets" defaultOpen={false}>
+            <Group title="Community assets">
               {AMENITY_CATEGORIES.map(cat => (
                 <Toggle key={cat.key} label={cat.label} swatch={cat.color}
                   url={`/memphis/amenities/${cat.key}.geojson`}
@@ -177,7 +177,7 @@ export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
                 onChange={v => onChange({ ...layers, knowledgeQuest: v })} />
             </Group>
 
-            <Group title="Transit" defaultOpen={false}>
+            <Group title="Transit">
               <Toggle label="MATA routes" swatch="#2563eb"
                 url="/memphis/transit/routes.geojson"
                 checked={layers.transit}

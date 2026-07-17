@@ -60,7 +60,7 @@ export default function SignupPage() {
           ) : (
             <>
               <span className="w-10 h-10 rounded-lg bg-primary-900 flex items-center justify-center mb-5">
-                <svg viewBox="0 0 24 24" style={{ width: 19, height: 19 }} className="text-accent-400" fill="currentColor">
+                <svg viewBox="0 0 24 24" style={{ width: 19, height: 19 }} className="text-accent-500" fill="currentColor">
                   <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
                 </svg>
               </span>

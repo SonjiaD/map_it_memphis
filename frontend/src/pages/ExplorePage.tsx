@@ -20,32 +20,32 @@ const WELCOME_DISMISSED_KEY = 'mapp-welcome-dismissed'
 
 function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="absolute top-4 left-4 z-[1000] max-w-sm bg-white rounded-2xl shadow-xl border border-border p-5">
+    <div className="absolute top-24 left-4 z-[1000] max-w-sm bg-white rounded-2xl shadow-xl border border-border p-5">
       <div className="flex items-center gap-2.5 mb-2">
-        <span className="w-8 h-8 rounded-xl bg-primary-700 flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-accent-400" fill="currentColor" style={{ width: 18, height: 18 }}>
+        <span className="w-8 h-8 rounded-lg bg-primary-900 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" className="text-accent-500" fill="currentColor" style={{ width: 18, height: 18 }}>
             <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
           </svg>
         </span>
-        <h2 className="font-display font-bold text-lg text-primary-900">Whose Soulsville?</h2>
+        <h2 className="font-display text-xl text-primary-900">Whose Soulsville?</h2>
       </div>
-      <p className="text-sm text-gray-600 leading-relaxed mb-2.5">
+      <p className="text-sm text-primary-600 leading-relaxed mb-2.5">
         Residents draw their own neighborhood boundary and mark the places that matter
         to them. This map compares their answers with official lines.
       </p>
-      <p className="text-xs text-gray-400 leading-relaxed mb-3.5">
+      <p className="text-xs text-primary-400 leading-relaxed mb-3.5">
         Blue outlines are census tracts. The dashed rust box is the approximate study
         area. Open the layer panel to explore more.
       </p>
       <div className="flex items-center gap-3">
         <button
           onClick={onDismiss}
-          className="bg-primary-700 hover:bg-primary-600 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
+          className="bg-primary-900 hover:bg-primary-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
         >
           Explore the map
         </button>
-        <Link to="/about" className="text-sm text-primary-600 hover:text-primary-500 font-medium">
-          About the project
+        <Link to="/story" className="text-sm text-accent-600 hover:text-accent-500 font-medium">
+          Read the story
         </Link>
       </div>
     </div>
@@ -54,7 +54,7 @@ function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
 
 function EmptyResidentDataToast() {
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm px-5 py-2.5 rounded-full shadow-lg">
+    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm px-5 py-2.5 rounded-xl shadow-lg">
       No resident submissions yet. Youth researchers are collecting data now.
     </div>
   )

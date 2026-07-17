@@ -20,29 +20,18 @@ export default function ProfilePage() {
           </div>
           <div className="p-8">
             <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400 mb-3">Data collection access</p>
-            {profile?.is_researcher ? (
-              <>
-                <span className="inline-flex items-center gap-2 bg-accent-50 border border-accent-200 text-accent-700 text-sm font-medium px-3.5 py-1.5 rounded-lg">
-                  <svg viewBox="0 0 20 20" className="w-4 h-4" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Authorized youth researcher
-                </span>
-                <p className="text-sm text-primary-500 leading-relaxed mt-4">
-                  You can collect resident boundaries and asset pins in the field from the Collect page.
-                  Everything you save appears on the public map right away.
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="inline-block bg-surface-muted border border-border text-primary-600 text-sm font-medium px-3.5 py-1.5 rounded-lg">
-                  Not yet authorized
-                </span>
-                <p className="text-sm text-primary-500 leading-relaxed mt-4">
-                  Your account exists but cannot collect field data yet. Contact the study
-                  coordinator to have it authorized.
-                </p>
-              </>
+            <span className="inline-flex items-center gap-2 bg-accent-50 border border-accent-200 text-accent-700 text-sm font-medium px-3.5 py-1.5 rounded-lg">
+              <svg viewBox="0 0 20 20" className="w-4 h-4" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              You can collect field data
+            </span>
+            <p className="text-sm text-primary-500 leading-relaxed mt-4">
+              Draw resident boundaries and drop asset pins from the Collect page. A study
+              coordinator reviews new submissions before they appear on the public map.
+            </p>
+            {profile?.is_researcher && (
+              <p className="font-mono text-[11px] text-accent-600 mt-3">You are a reviewer.</p>
             )}
           </div>
         </div>

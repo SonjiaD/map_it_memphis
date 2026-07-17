@@ -217,8 +217,11 @@ export default function CollectPage() {
         )}
       </MapContainer>
 
-      {/* Instruction banner */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg max-w-[92%] text-center">
+      {/* Instruction banner (below the fixed nav island) */}
+      <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary-900/95 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg max-w-[92%] text-center">
+        <div className="flex justify-center mb-1.5">
+          <ProgressDots light current={step === 'draw' ? 1 : step === 'pins' ? 2 : 3} />
+        </div>
         {step === 'draw' && !boundaryClosed && 'Tap the map to trace the outline of Soulsville as the resident sees it'}
         {step === 'draw' && boundaryClosed && 'Boundary complete. Continue, or clear to redraw.'}
         {step === 'pins' && !pendingPin && 'Tap places that matter to the resident, or continue to review'}
@@ -300,7 +303,7 @@ export default function CollectPage() {
 
       {/* Pending pin bottom sheet */}
       {step === 'pins' && pendingPin && (
-        <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-gray-200 p-5 max-h-[60%] overflow-auto">
+        <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-border p-5 max-h-[60%] overflow-auto">
           <div className="max-w-xl mx-auto flex flex-col gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">What kind of place is this?</label>
@@ -360,9 +363,9 @@ export default function CollectPage() {
 
       {/* Review sheet */}
       {step === 'review' && (
-        <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-gray-200 p-5 max-h-[65%] overflow-auto">
+        <div className="absolute bottom-0 inset-x-0 z-[1000] bg-white rounded-t-2xl shadow-2xl border-t border-border p-5 max-h-[65%] overflow-auto">
           <div className="max-w-xl mx-auto">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">Review session</h2>
+            <h2 className="font-display text-xl text-primary-900 mb-3">Review session</h2>
             <div className="text-sm text-gray-600 space-y-1.5 mb-4">
               <p><span className="font-semibold text-gray-800">Boundary:</span> {vertices.length} points</p>
               <p><span className="font-semibold text-gray-800">Respondent:</span> {respondent.relationship}, age {respondent.ageRange}, {respondent.yearsInNeighborhood.toLowerCase()} in the neighborhood</p>

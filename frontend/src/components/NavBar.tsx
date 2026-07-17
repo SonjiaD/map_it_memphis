@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 function PinGlyph({ className = '' }: { className?: string }) {
   return (
     <span className={`w-8 h-8 rounded-lg bg-primary-900 flex items-center justify-center shrink-0 ${className}`}>
-      <svg viewBox="0 0 24 24" style={{ width: 16, height: 16 }} className="text-accent-400" fill="currentColor">
+      <svg viewBox="0 0 24 24" style={{ width: 16, height: 16 }} className="text-accent-500" fill="currentColor">
         <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
       </svg>
     </span>
@@ -50,9 +50,9 @@ function UserChip() {
             <p className="text-sm font-semibold text-primary-900 truncate">{name}</p>
             <p className="font-mono text-[11px] text-primary-500 truncate">{user?.email}</p>
             <span className={`inline-block mt-2 font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded ${
-              profile?.is_researcher ? 'bg-accent-50 text-accent-700' : 'bg-surface-muted text-primary-500'
+              profile?.is_researcher ? 'bg-accent-50 text-accent-700' : 'bg-surface-muted text-primary-600'
             }`}>
-              {profile?.is_researcher ? 'Youth researcher' : 'Not yet authorized'}
+              {profile?.is_researcher ? 'Reviewer' : 'Field contributor'}
             </span>
           </div>
           <Link to="/profile" onClick={() => setOpen(false)}
@@ -98,7 +98,7 @@ export function NavBar() {
             <nav className="hidden md:flex items-center gap-1">
               <NavLink to="/" end className={linkClass}>Explore</NavLink>
               <NavLink to="/story" className={linkClass}>The Story</NavLink>
-              {user && profile?.is_researcher && (
+              {user && (
                 <NavLink to="/collect" className={({ isActive }) =>
                   `px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
                     isActive ? 'text-accent-700 bg-accent-50' : 'text-accent-600 hover:text-accent-700 hover:bg-accent-50'
@@ -141,7 +141,7 @@ export function NavBar() {
           {[
             { to: '/', label: 'Explore' },
             { to: '/story', label: 'The Story' },
-            ...(user && profile?.is_researcher ? [{ to: '/collect', label: 'Collect' }] : []),
+            ...(user ? [{ to: '/collect', label: 'Collect' }] : []),
             ...(user ? [{ to: '/profile', label: 'Profile' }] : [{ to: '/login', label: 'Researcher Login' }]),
           ].map(l => (
             <NavLink

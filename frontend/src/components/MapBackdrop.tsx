@@ -5,7 +5,7 @@ import { MapContainer, TileLayer } from 'react-leaflet'
 // keeps the cards comfortably readable.
 export function MapBackdrop() {
   return (
-    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
       <MapContainer
         center={[35.104, -90.025]}
         zoom={13}
