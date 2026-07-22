@@ -123,7 +123,7 @@ export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="absolute top-24 right-4 z-[1000] w-72">
+    <div className="absolute top-4 right-4 z-[1000] w-72">
       <div className="bg-white rounded-2xl shadow-xl border border-border overflow-hidden">
         <button
           onClick={() => setOpen(!open)}
