@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { computeAverageShape } from '../lib/consensusHeatmap'
+import { CustomSelect } from '../components/CustomSelect'
 import type { Polygon } from 'geojson'
 
 // Admin console.
@@ -309,11 +310,12 @@ function MapReview() {
         </h2>
         <div className="flex items-center gap-2 ml-auto">
           <label className="font-mono text-[10px] tracking-wider uppercase text-primary-400">Collector</label>
-          <select value={filterCollector} onChange={e => setFilterCollector(e.target.value)}
-            className="bg-white border border-border rounded-lg px-2.5 py-1.5 text-sm text-primary-700 focus:outline-none focus:border-accent-500">
-            <option value="all">All collectors</option>
-            {collectors.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
+          <CustomSelect
+            className="w-48"
+            value={filterCollector}
+            onChange={setFilterCollector}
+            options={[{ value: 'all', label: 'All collectors' }, ...collectors.map(c => ({ value: c.id, label: c.label }))]}
+          />
           <button onClick={() => setSortNewest(s => !s)}
             className="border border-border hover:border-primary-300 rounded-lg px-3 py-1.5 text-sm text-primary-600 transition-colors">
             {sortNewest ? 'Newest first' : 'Oldest first'} {sortNewest ? '↓' : '↑'}
