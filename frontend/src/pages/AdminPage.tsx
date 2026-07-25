@@ -162,6 +162,9 @@ function collectorLabel(r: BoundaryRow): string {
   const c = collectorOf(r)
   return c?.full_name || c?.email || 'Unknown'
 }
+function collectorEmail(r: BoundaryRow): string {
+  return collectorOf(r)?.email || '—'
+}
 
 interface PublishedRow {
   source_count: number
@@ -313,6 +316,7 @@ function MapReview() {
                 <tr className="border-b border-border bg-surface-muted/40">
                   <th className={TH}>Incl.</th>
                   <th className={TH}>Collector</th>
+                  <th className={TH}>Email</th>
                   <th className={TH}>Submitted</th>
                   <th className={TH}>Session</th>
                   <th className={TH}>Relationship</th>
@@ -331,6 +335,7 @@ function MapReview() {
                         className="accent-accent-500 w-4 h-4 align-middle" />
                     </td>
                     <td className={`${TD} font-medium text-primary-900`}>{collectorLabel(r)}</td>
+                    <td className={`${TD} font-mono text-[12px] text-primary-500`}>{collectorEmail(r)}</td>
                     <td className={TD}>{fmtDate(r.created_at)}</td>
                     <td className={TD}>{fmtDate(r.session_date)}</td>
                     <td className={TD}>{r.respondent_relationship || '—'}</td>
