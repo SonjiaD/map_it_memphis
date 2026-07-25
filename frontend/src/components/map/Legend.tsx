@@ -27,7 +27,7 @@ export function Legend({ layers }: { layers: LayerState }) {
   if (entries.length === 0) return null
 
   return (
-    <div className="absolute bottom-6 left-4 z-[1000] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-border px-3.5 py-2.5 max-w-[220px]">
+    <div className="pointer-events-auto bg-white/95 backdrop-blur rounded-xl shadow-lg border border-border px-3.5 py-2.5 max-w-[220px]">
       <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-400 mb-1.5">Showing</p>
       <ul className="space-y-1">
         {entries.map(e => (

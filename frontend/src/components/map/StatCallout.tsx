@@ -14,7 +14,7 @@ export function StatCallout({ average }: { average: PublishedAverage }) {
   )
 
   return (
-    <div className="absolute bottom-24 right-4 z-[1000] bg-white rounded-2xl shadow-xl border border-border px-5 py-4 max-w-[250px]">
+    <div className="w-full pointer-events-auto bg-white rounded-2xl shadow-xl border border-border px-5 py-4">
       <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-400 mb-1.5">Resident vs official</p>
       {overlapPct !== null ? (
         <>

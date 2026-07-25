@@ -19,7 +19,7 @@ const WELCOME_DISMISSED_KEY = 'mapp-welcome-dismissed'
 
 function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="absolute top-24 left-4 z-[1000] max-w-sm bg-white rounded-2xl shadow-xl border border-border p-5">
+    <div className="w-full pointer-events-auto bg-white rounded-2xl shadow-xl border border-border p-5">
       <div className="flex items-center gap-2.5 mb-2">
         <span className="w-8 h-8 rounded-lg bg-primary-900 flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" className="text-accent-500" fill="currentColor" style={{ width: 18, height: 18 }}>
@@ -118,10 +118,17 @@ export default function ExplorePage() {
       </MapContainer>
 
       <LayerTogglePanel layers={layers} onChange={setLayers} />
-      <Legend layers={layers} />
+
+      {/* Left overlay column: welcome + stat stack from the top, legend pinned to the
+          bottom. Grouping them here guarantees they never overlap each other, and the
+          layer panel is the only thing on the right, so the two sides can't collide. */}
+      <div className="absolute top-24 bottom-6 left-4 z-[1000] w-[min(90vw,20rem)] flex flex-col items-start gap-3 pointer-events-none overflow-y-auto min-h-0">
+        {showWelcome && <WelcomeCard onDismiss={dismissWelcome} />}
+        {layers.communityAverage && average && <StatCallout average={average} />}
+        <div className="mt-auto pointer-events-auto"><Legend layers={layers} /></div>
+      </div>
+
       {layers.communityAverage && !average && <EmptyAverageCard />}
-      {layers.communityAverage && average && <StatCallout average={average} />}
-      {showWelcome && <WelcomeCard onDismiss={dismissWelcome} />}
     </div>
   )
 }
