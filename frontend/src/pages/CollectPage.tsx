@@ -184,9 +184,18 @@ export default function CollectPage() {
   return (
     <div className="relative flex-1 min-h-0">
       <MapContainer center={START_CENTER} zoom={START_ZOOM} className="absolute inset-0">
+        {/* Satellite imagery + place-name labels (Google-Earth-style), so a resident
+            can orient by real landmarks (a store, a church, a corner) while drawing.
+            Both from Esri's free public tile services, no API key required. */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='Tiles &copy; Esri'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={19}
+        />
+        <TileLayer
+          attribution='Labels &copy; Esri'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={19}
         />
 
         {step === 'draw' && (
