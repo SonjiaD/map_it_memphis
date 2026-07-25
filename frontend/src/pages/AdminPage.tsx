@@ -293,22 +293,15 @@ function MapReview() {
     new Map(rows.map(r => [r.researcher_id, collectorLabel(r)])).entries(),
   ).map(([id, label]) => ({ id, label }))
 
-  // Per-researcher download number: within each collector's own maps, ordered by
-  // session start, 1..N. Stable across per-row and bulk downloads so filenames match.
+  // Global download number: every map numbered 1..N by session start (earliest = #1),
+  // independent of who collected it or how the table is currently sorted, so #1 always
+  // refers to the same map. Used by the # column and the download filenames alike.
   const numberById = useMemo(() => {
-    const byResearcher = new Map<string, BoundaryRow[]>()
-    for (const r of rows) {
-      const list = byResearcher.get(r.researcher_id) ?? []
-      list.push(r)
-      byResearcher.set(r.researcher_id, list)
-    }
     const map = new Map<string, number>()
-    for (const list of byResearcher.values()) {
-      list
-        .slice()
-        .sort((a, b) => (a.started_at ?? a.created_at).localeCompare(b.started_at ?? b.created_at))
-        .forEach((r, i) => map.set(r.id, i + 1))
-    }
+    rows
+      .slice()
+      .sort((a, b) => (a.started_at ?? a.created_at).localeCompare(b.started_at ?? b.created_at))
+      .forEach((r, i) => map.set(r.id, i + 1))
     return map
   }, [rows])
 
