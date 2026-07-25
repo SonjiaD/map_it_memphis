@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { computeOverlapStat, type HeatmapCellProps } from '../../lib/consensusHeatmap'
 import { useStaticGeojson } from './useStaticGeojson'
-import type { FeatureCollection, Polygon } from 'geojson'
+import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson'
 
 // Live overlap stat between the resident consensus area and the official
 // Memphis 3.0 South District boundary. Hidden until there are submissions.
 export function StatCallout({ heatmap, boundaryCount }: {
-  heatmap: FeatureCollection<Polygon, HeatmapCellProps>
+  heatmap: FeatureCollection<Polygon | MultiPolygon, HeatmapCellProps>
   boundaryCount: number
 }) {
   const southDistrict = useStaticGeojson('/memphis/memphis30_south_district.geojson')

@@ -4,23 +4,31 @@ import { supabase } from '../../lib/supabase'
 import { assetPinIcon } from './pins'
 import type { DrawnBoundary } from '../../hooks/useDrawnBoundaries'
 import type { HeatmapCellProps } from '../../lib/consensusHeatmap'
-import type { FeatureCollection, Polygon } from 'geojson'
+import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson'
 
-// Consensus heatmap: grid cells shaded darker where more residents included the
-// cell in their drawn Soulsville. Data computed in ExplorePage and passed down.
-export function ConsensusHeatmapLayer({ heatmap }: { heatmap: FeatureCollection<Polygon, HeatmapCellProps> }) {
+// Consensus heatmap: grid cells (clipped to the resident-drawn outline) shaded
+// darker where more residents included the cell in their Soulsville. Each cell
+// carries a matching-color stroke so abutting cells have no antialiasing seams and
+// the surface reads as continuous. Data computed in ExplorePage and passed down.
+export function ConsensusHeatmapLayer({ heatmap }: { heatmap: FeatureCollection<Polygon | MultiPolygon, HeatmapCellProps> }) {
   if (heatmap.features.length === 0) return null
   return (
     <GeoJSON
       // Key by feature count + max agreement so a realtime update remounts the layer
       key={`heatmap-${heatmap.features.length}-${Math.max(...heatmap.features.map(f => f.properties.agreementCount))}`}
       data={heatmap}
-      style={feature => ({
-        stroke: false,
-        fill: true,
-        fillColor: '#b8593a',
-        fillOpacity: 0.08 + 0.62 * (feature?.properties?.agreementPct ?? 0),
-      })}
+      style={feature => {
+        const opacity = 0.1 + 0.6 * (feature?.properties?.agreementPct ?? 0)
+        return {
+          stroke: true,
+          color: '#b8593a',
+          weight: 0.5,
+          opacity,
+          fill: true,
+          fillColor: '#b8593a',
+          fillOpacity: opacity,
+        }
+      }}
     />
   )
 }
