@@ -24,6 +24,26 @@ function PageLoading() {
   )
 }
 
+// The map workspace needs room and isn't built for phones. Below md (768px) this
+// covers the app with a "use a larger screen" message. Pure CSS (md:hidden), so it
+// appears/disappears automatically as the viewport crosses the breakpoint.
+function SmallScreenGate() {
+  return (
+    <div className="md:hidden fixed inset-0 z-[3000] bg-primary-900 text-white flex flex-col items-center justify-center text-center px-8">
+      <span className="w-14 h-14 rounded-2xl bg-primary-800 flex items-center justify-center mb-6">
+        <svg viewBox="0 0 24 24" className="text-accent-500" fill="currentColor" style={{ width: 28, height: 28 }}>
+          <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z" />
+        </svg>
+      </span>
+      <h1 className="font-display text-3xl mb-3">Best viewed on a larger screen</h1>
+      <p className="text-primary-200 max-w-xs leading-relaxed">
+        MAPP It Memphis is an interactive map workspace that needs more room than a phone.
+        Please open it on a tablet (landscape), laptop, or desktop.
+      </p>
+    </div>
+  )
+}
+
 function AppShell() {
   const location = useLocation()
   // The Explore map is a fixed workspace; every other page scrolls normally.
@@ -52,6 +72,7 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+      <SmallScreenGate />
     </div>
   )
 }
