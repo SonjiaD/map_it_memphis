@@ -90,17 +90,20 @@ function ChapterCard({ chapter, isActive, innerRef }: {
   )
 }
 
-function ImageSlot({ caption, wide = false }: { caption: string; wide?: boolean }) {
+function ImageSlot({ caption, src, wide = false }: { caption: string; src?: string; wide?: boolean }) {
+  const isPlaceholder = !src
   return (
     <figure className={wide ? '' : 'md:max-w-md'}>
       <img
-        src="/images/blank.png"
-        alt={`Placeholder: ${caption}`}
+        src={src ?? '/images/blank.png'}
+        alt={isPlaceholder ? `Placeholder: ${caption}` : caption}
         className={`w-full rounded-xl bg-surface-muted object-cover ${wide ? 'aspect-[21/9]' : 'aspect-[4/3]'}`}
       />
-      <figcaption className="font-mono text-[11px] text-primary-400 mt-2">
-        Photo to add: {caption}
-      </figcaption>
+      {isPlaceholder && (
+        <figcaption className="font-mono text-[11px] text-primary-400 mt-2">
+          Photo to add: {caption}
+        </figcaption>
+      )}
     </figure>
   )
 }
@@ -119,11 +122,13 @@ const METHOD_STEPS = [
     title: 'Residents draw their neighborhood',
     body: 'A youth researcher hands a resident a tablet showing a plain street map. The resident traces the outline of what they consider Soulsville. The drawing screen shows no official lines at all, deliberately: seeing an official boundary first would anchor people to it.',
     image: 'close-up of a tablet showing a hand-drawn boundary',
+    src: '/images/tablet-drawing.jpg',
   },
   {
     title: 'Residents mark the places that matter',
     body: 'After drawing, residents drop pins on the places they consider neighborhood assets: the corner store, the church, the park where everyone actually goes, spots no official dataset knows about. Each pin records why that place matters, in the resident’s own words.',
     image: 'a Soulsville place residents care about (corner store, church, park)',
+    src: '/images/soulsville-place.jpg',
   },
   {
     title: 'The drawings stack into a consensus map',
@@ -218,7 +223,10 @@ export default function StoryPage() {
           <div className="max-w-3xl mx-auto">
             <Editorial>
               <p className="font-mono text-xs font-medium tracking-[0.18em] uppercase text-accent-600 mb-3">The method</p>
-              <h2 className="font-display text-4xl md:text-5xl text-primary-900 mb-14">How the research works</h2>
+              <h2 className="font-display text-4xl md:text-5xl text-primary-900 mb-8">How the research works</h2>
+            </Editorial>
+            <Editorial className="mb-14">
+              <ImageSlot caption="A resident pointing at a tablet map during a community mapping session" src="/images/mapping-session.jpg" wide />
             </Editorial>
             <ol className="space-y-0">
               {METHOD_STEPS.map((step, i) => (
@@ -230,7 +238,7 @@ export default function StoryPage() {
                     <div>
                       <h3 className="font-semibold text-lg text-primary-900 mb-2">{step.title}</h3>
                       <p className="text-primary-600 leading-relaxed mb-4">{step.body}</p>
-                      {step.image && <ImageSlot caption={step.image} />}
+                      {step.image && <ImageSlot caption={step.image} src={step.src} />}
                     </div>
                   </li>
                 </Editorial>
@@ -249,9 +257,8 @@ export default function StoryPage() {
             <div className="grid md:grid-cols-2 gap-8">
               <Editorial>
                 <div className="rounded-2xl border border-border overflow-hidden">
-                  <img src="/images/blank.png" alt="Placeholder: Dr. Brenda Mathias portrait" className="w-full aspect-[3/2] object-cover bg-surface-muted" />
+                  <img src="/images/brenda-mathias.jpg" alt="Dr. Brenda Mathias" className="w-full aspect-[3/2] object-cover bg-surface-muted" />
                   <div className="p-6">
-                    <p className="font-mono text-[11px] text-primary-400 mb-3">Photo to add: Dr. Brenda Mathias portrait</p>
                     <h3 className="font-semibold text-lg text-primary-900 mb-1">Dr. Brenda Mathias</h3>
                     <p className="text-sm text-primary-600 leading-relaxed">
                       Assistant Professor, School of Social Work, University of Memphis. Leads the research and trains the youth researcher cohort.
@@ -261,9 +268,8 @@ export default function StoryPage() {
               </Editorial>
               <Editorial>
                 <div className="rounded-2xl border border-border overflow-hidden">
-                  <img src="/images/blank.png" alt="Placeholder: Knowledge Quest campus or team photo" className="w-full aspect-[3/2] object-cover bg-surface-muted" />
+                  <img src="/images/knowledge-quest.jpg" alt="Knowledge Quest logo" className="w-full aspect-[3/2] object-contain bg-white p-8" />
                   <div className="p-6">
-                    <p className="font-mono text-[11px] text-primary-400 mb-3">Photo to add: Knowledge Quest campus or team</p>
                     <h3 className="font-semibold text-lg text-primary-900 mb-1">Knowledge Quest</h3>
                     <p className="text-sm text-primary-600 leading-relaxed">
                       A youth-serving nonprofit rooted in Soulsville and the project's community partner. The youth researchers collecting this data are theirs.
