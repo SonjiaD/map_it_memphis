@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { computeAverageShape } from '../lib/consensusHeatmap'
@@ -186,6 +186,11 @@ function MapReview() {
   const [notice, setNotice] = useState('')
   const [filterCollector, setFilterCollector] = useState<string>('all')
   const [sortNewest, setSortNewest] = useState(true)
+  // Synchronous re-entrancy guard: computeAverageShape below runs before the first
+  // await, so React won't repaint the "Publishing..." state until it's done. A ref
+  // (unlike useState) updates immediately, so it actually blocks a second click
+  // fired inside that window, which `disabled={publishing}` alone cannot.
+  const publishingRef = useRef(false)
 
   const load = useCallback(async () => {
     setError('')
@@ -220,26 +225,35 @@ function MapReview() {
   const included = rows.filter(r => r.included_in_average)
 
   async function publish() {
+    if (publishingRef.current) return
+    publishingRef.current = true
     setPublishing(true); setError(''); setNotice('')
-    const avg = computeAverageShape(included.map(r => r.geometry), AVERAGE_THRESHOLD)
-    if (!avg) {
-      setError('Nothing to publish yet: the included maps do not share a majority-agreement area.')
+    try {
+      // Yield to the browser so it actually paints the "Publishing..." state
+      // before the synchronous grid computation below blocks the main thread.
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      const avg = computeAverageShape(included.map(r => r.geometry), AVERAGE_THRESHOLD)
+      if (!avg) {
+        setError('Nothing to publish yet: the included maps do not share a majority-agreement area.')
+        return
+      }
+      const { error } = await supabase.from('published_averages').insert({
+        neighborhood: 'soulsville',
+        geometry: avg.geometry,
+        threshold: AVERAGE_THRESHOLD,
+        source_count: avg.sourceCount,
+        published_by: profile?.id ?? null,
+      })
+      if (error) setError(error.message)
+      else {
+        setNotice(`Published the community average from ${avg.sourceCount} map${avg.sourceCount === 1 ? '' : 's'}.`)
+        await load()
+      }
+    } finally {
+      publishingRef.current = false
       setPublishing(false)
-      return
     }
-    const { error } = await supabase.from('published_averages').insert({
-      neighborhood: 'soulsville',
-      geometry: avg.geometry,
-      threshold: AVERAGE_THRESHOLD,
-      source_count: avg.sourceCount,
-      published_by: profile?.id ?? null,
-    })
-    if (error) setError(error.message)
-    else {
-      setNotice(`Published the community average from ${avg.sourceCount} map${avg.sourceCount === 1 ? '' : 's'}.`)
-      await load()
-    }
-    setPublishing(false)
   }
 
   // Unique collectors present in the data, for the filter dropdown.
@@ -281,7 +295,8 @@ function MapReview() {
             </p>
           </div>
           <button onClick={publish} disabled={publishing || included.length === 0}
-            className="shrink-0 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
+            className="shrink-0 flex items-center gap-2 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
+            {publishing && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {publishing ? 'Publishing...' : 'Publish community map'}
           </button>
         </div>
