@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { computeAverageShape } from '../lib/consensusHeatmap'
+import { downloadShapefile, downloadAllShapefiles } from '../lib/shapefileExport'
 import { CustomSelect } from '../components/CustomSelect'
 import type { Polygon } from 'geojson'
 
@@ -9,12 +10,38 @@ import type { Polygon } from 'geojson'
 //   Access requests: approve/revoke who can collect field data.
 //   Maps & publishing: curate which submitted maps count toward the community
 //     average, then publish a single averaged shape (the public-facing output).
+//     Also: download individual submitted maps as Shapefiles.
 // All backed by the admin RLS policies from migrations 0005 + 0006.
 
 const AVERAGE_THRESHOLD = 0.5 // majority agreement
 
 const fmtDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+
+// Memphis is Central Time. Session start/end are stored UTC; show them in the field
+// team's local time so the numbers match what happened on the ground.
+const MEMPHIS_TZ = 'America/Chicago'
+const fmtDateCT = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('en-US', { timeZone: MEMPHIS_TZ, month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+const fmtTimeCT = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleTimeString('en-US', { timeZone: MEMPHIS_TZ, hour: 'numeric', minute: '2-digit' }) : '—'
+
+// Filename convention for downloaded maps: {n}_{researcher}_{yyyy-mm-dd}_{hhmm}ct,
+// e.g. 1_sonja_deng_2026-07-22_1430ct. Date/time in Memphis local time.
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'unknown'
+}
+function shapefileFilename(num: number, collectorName: string, startedAt: string | null): string {
+  const d = startedAt ? new Date(startedAt) : new Date()
+  // en-CA gives YYYY-MM-DD; extract HH and MM in Memphis time for the suffix.
+  const date = d.toLocaleDateString('en-CA', { timeZone: MEMPHIS_TZ })
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: MEMPHIS_TZ, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d)
+  const hh = parts.find(p => p.type === 'hour')?.value ?? '00'
+  const mm = parts.find(p => p.type === 'minute')?.value ?? '00'
+  return `${num}_${slugify(collectorName)}_${date}_${hh}${mm}ct`
+}
 
 // ---- shared bits ------------------------------------------------------------
 
@@ -144,6 +171,8 @@ interface BoundaryRow {
   geometry: Polygon
   researcher_id: string
   session_date: string | null
+  started_at: string | null
+  ended_at: string | null
   respondent_relationship: string | null
   respondent_age_range: string | null
   years_in_neighborhood: string | null
@@ -187,18 +216,20 @@ function MapReview() {
   const [notice, setNotice] = useState('')
   const [filterCollector, setFilterCollector] = useState<string>('all')
   const [sortNewest, setSortNewest] = useState(true)
+  const [downloadingAll, setDownloadingAll] = useState(false)
   // Synchronous re-entrancy guard: computeAverageShape below runs before the first
   // await, so React won't repaint the "Publishing..." state until it's done. A ref
   // (unlike useState) updates immediately, so it actually blocks a second click
   // fired inside that window, which `disabled={publishing}` alone cannot.
   const publishingRef = useRef(false)
+  const downloadingAllRef = useRef(false)
 
   const load = useCallback(async () => {
     setError('')
     const [{ data: boundaries, error: bErr }, { data: pub }] = await Promise.all([
       supabase
         .from('drawn_boundaries')
-        .select('id, geometry, researcher_id, session_date, respondent_relationship, respondent_age_range, years_in_neighborhood, consent_given, notes, included_in_average, created_at, collector:profiles!researcher_id(full_name, email)')
+        .select('id, geometry, researcher_id, session_date, started_at, ended_at, respondent_relationship, respondent_age_range, years_in_neighborhood, consent_given, notes, included_in_average, created_at, collector:profiles!researcher_id(full_name, email)')
         .order('created_at', { ascending: false }),
       supabase
         .from('published_averages')
@@ -262,14 +293,74 @@ function MapReview() {
     new Map(rows.map(r => [r.researcher_id, collectorLabel(r)])).entries(),
   ).map(([id, label]) => ({ id, label }))
 
+  // Per-researcher download number: within each collector's own maps, ordered by
+  // session start, 1..N. Stable across per-row and bulk downloads so filenames match.
+  const numberById = useMemo(() => {
+    const byResearcher = new Map<string, BoundaryRow[]>()
+    for (const r of rows) {
+      const list = byResearcher.get(r.researcher_id) ?? []
+      list.push(r)
+      byResearcher.set(r.researcher_id, list)
+    }
+    const map = new Map<string, number>()
+    for (const list of byResearcher.values()) {
+      list
+        .slice()
+        .sort((a, b) => (a.started_at ?? a.created_at).localeCompare(b.started_at ?? b.created_at))
+        .forEach((r, i) => map.set(r.id, i + 1))
+    }
+    return map
+  }, [rows])
+
+  // Short, DBF-safe (8-char field-name limit) attributes baked into each shapefile.
+  function shapefileProps(r: BoundaryRow) {
+    return {
+      num: numberById.get(r.id) ?? 0,
+      collector: collectorLabel(r),
+      email: collectorEmail(r),
+      start_ct: `${fmtDateCT(r.started_at)} ${fmtTimeCT(r.started_at)}`,
+      end_ct: `${fmtDateCT(r.ended_at)} ${fmtTimeCT(r.ended_at)}`,
+      relation: r.respondent_relationship ?? '',
+      age: r.respondent_age_range ?? '',
+      years: r.years_in_neighborhood ?? '',
+      consent: r.consent_given ? 'yes' : 'no',
+      notes: r.notes ?? '',
+    }
+  }
+  function fileBase(r: BoundaryRow) {
+    return shapefileFilename(numberById.get(r.id) ?? 0, collectorLabel(r), r.started_at)
+  }
+
+  function downloadOne(r: BoundaryRow) {
+    downloadShapefile(r.geometry, shapefileProps(r), fileBase(r))
+  }
+
+  async function downloadAll() {
+    if (downloadingAllRef.current || rows.length === 0) return
+    downloadingAllRef.current = true
+    setDownloadingAll(true); setError('')
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0)) // let the spinner paint
+      await downloadAllShapefiles(
+        rows.map(r => ({ geometry: r.geometry, properties: shapefileProps(r), folderName: fileBase(r) })),
+        `mapp-submissions_${new Date().toLocaleDateString('en-CA', { timeZone: MEMPHIS_TZ })}`,
+      )
+    } catch (e: any) {
+      setError(e?.message || 'Could not build the download.')
+    } finally {
+      downloadingAllRef.current = false
+      setDownloadingAll(false)
+    }
+  }
+
   // Filter is display-only; publishing always uses the included_in_average flag.
   const visible = rows
     .filter(r => filterCollector === 'all' || r.researcher_id === filterCollector)
-    .sort((a, b) =>
-      sortNewest
-        ? b.created_at.localeCompare(a.created_at)
-        : a.created_at.localeCompare(b.created_at),
-    )
+    .sort((a, b) => {
+      const av = a.started_at ?? a.created_at
+      const bv = b.started_at ?? b.created_at
+      return sortNewest ? bv.localeCompare(av) : av.localeCompare(bv)
+    })
 
   if (loading) return <Spinner label="Loading submissions..." />
 
@@ -303,15 +394,21 @@ function MapReview() {
         </div>
       </div>
 
-      {/* Filter + sort controls */}
+      {/* Filter + sort + bulk-download controls */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         <h2 className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400">
           Submitted maps ({visible.length}{filterCollector !== 'all' ? ` of ${rows.length}` : ''})
         </h2>
         <div className="flex items-center gap-2 ml-auto">
-          <label className="font-mono text-[10px] tracking-wider uppercase text-primary-400">Collector</label>
+          <button onClick={downloadAll} disabled={downloadingAll || rows.length === 0}
+            title="Download every submitted map as Shapefiles, one zip"
+            className="flex items-center gap-2 bg-primary-900 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+            {downloadingAll && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+            {downloadingAll ? 'Preparing...' : `Download all (${rows.length})`}
+          </button>
+          <label className="font-mono text-[10px] tracking-wider uppercase text-primary-400 ml-1">Collector</label>
           <CustomSelect
-            className="w-48"
+            className="w-44"
             value={filterCollector}
             onChange={setFilterCollector}
             options={[{ value: 'all', label: 'All collectors' }, ...collectors.map(c => ({ value: c.id, label: c.label }))]}
@@ -332,15 +429,18 @@ function MapReview() {
               <thead>
                 <tr className="border-b border-border bg-surface-muted/40">
                   <th className={TH}>Incl.</th>
+                  <th className={TH}>#</th>
                   <th className={TH}>Collector</th>
                   <th className={TH}>Email</th>
-                  <th className={TH}>Submitted</th>
-                  <th className={TH}>Session</th>
+                  <th className={TH}>Date</th>
+                  <th className={TH} title="Start = when the researcher began drawing the map. End = when they saved. Shown in Memphis local time (CT).">Start · CT</th>
+                  <th className={TH} title="Start = when the researcher began drawing the map. End = when they saved. Shown in Memphis local time (CT).">End · CT</th>
                   <th className={TH}>Relationship</th>
                   <th className={TH}>Age</th>
                   <th className={TH}>Years here</th>
                   <th className={TH}>Consent</th>
                   <th className={TH}>Notes</th>
+                  <th className={TH}>Download</th>
                 </tr>
               </thead>
               <tbody>
@@ -351,10 +451,12 @@ function MapReview() {
                         onChange={e => toggleInclude(r.id, e.target.checked)}
                         className="accent-accent-500 w-4 h-4 align-middle" />
                     </td>
+                    <td className={`${TD} font-mono text-primary-400`}>{numberById.get(r.id) ?? '—'}</td>
                     <td className={`${TD} font-medium text-primary-900`}>{collectorLabel(r)}</td>
                     <td className={`${TD} font-mono text-[12px] text-primary-500`}>{collectorEmail(r)}</td>
-                    <td className={TD}>{fmtDate(r.created_at)}</td>
-                    <td className={TD}>{fmtDate(r.session_date)}</td>
+                    <td className={TD}>{fmtDateCT(r.started_at)}</td>
+                    <td className={`${TD} font-mono text-[12px]`}>{fmtTimeCT(r.started_at)}</td>
+                    <td className={`${TD} font-mono text-[12px]`}>{fmtTimeCT(r.ended_at)}</td>
                     <td className={TD}>{r.respondent_relationship || '—'}</td>
                     <td className={TD}>{r.respondent_age_range || '—'}</td>
                     <td className={TD}>{r.years_in_neighborhood || '—'}</td>
@@ -366,6 +468,16 @@ function MapReview() {
                       </span>
                     </td>
                     <td className={`${TD} max-w-[220px] truncate`} title={r.notes || ''}>{r.notes || '—'}</td>
+                    <td className={TD}>
+                      <button onClick={() => downloadOne(r)}
+                        title={`Download ${fileBase(r)}.zip (Shapefile)`}
+                        className="inline-flex items-center gap-1.5 border border-border hover:border-primary-300 hover:bg-surface-muted text-primary-700 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors">
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        SHP
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

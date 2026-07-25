@@ -28,3 +28,14 @@ Runs at `http://localhost:5173`. Requires a `frontend/.env` with your Supabase p
 ## Data pipeline
 
 Scripts for fetching and cleaning Memphis boundary and amenity data live in `data_pipeline/`, see `data_pipeline/README.md` for details.
+
+## Data model notes
+
+**Session timing (`drawn_boundaries.started_at` / `ended_at`).** Each collection session records two timestamps:
+
+- `started_at` = the moment the researcher **begins drawing the map** (leaving the consent/info step for the draw step). It deliberately does *not* include the time spent reading the consent script and filling in respondent details.
+- `ended_at` = when they hit **Save**.
+
+Both are captured on the client (one clock, so the duration is consistent) and stored in UTC. The admin console renders them in **Memphis local time (America/Chicago, "CT")** and uses `started_at` for the per-map download filenames. The older `session_date` column is retained but no longer displayed.
+
+**Admin map downloads.** Admins can download each submitted boundary as a zipped Shapefile, or all of them at once. Filenames follow `{n}_{researcher}_{yyyy-mm-dd}_{hhmm}ct` where `n` numbers each researcher's own maps by session start (see `frontend/src/pages/AdminPage.tsx`). Note the Shapefile `.dbf` format truncates attribute *column names* to 8 characters (values are intact).

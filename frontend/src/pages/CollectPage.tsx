@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Polygon, useMapEvents } from 'react-leaflet'
 import type { LatLng } from 'leaflet'
 import { useAuth } from '../contexts/AuthContext'
@@ -67,6 +67,10 @@ export default function CollectPage() {
   const [pendingPin, setPendingPin] = useState<DraftPin | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  // Session start = the moment the researcher begins DRAWING the map (the info/consent
+  // step doesn't count). Captured once per session; end is captured at save. Shown in
+  // the admin timing columns; see the README "Session timing" note.
+  const sessionStartedAtRef = useRef<string | null>(null)
 
   function resetSession() {
     setStep('info')
@@ -77,6 +81,7 @@ export default function CollectPage() {
     setPendingPin(null)
     setSaving(false)
     setSaveError('')
+    sessionStartedAtRef.current = null
   }
 
   async function handleSave() {
@@ -85,6 +90,7 @@ export default function CollectPage() {
     setSaveError('')
     try {
       const geometry = verticesToGeojsonPolygon(vertices)
+      const endedAt = new Date().toISOString()
       const { data: boundary, error: boundaryError } = await supabase
         .from('drawn_boundaries')
         .insert({
@@ -95,6 +101,8 @@ export default function CollectPage() {
           respondent_relationship: respondent.relationship,
           consent_given: respondent.consentGiven,
           notes: respondent.notes || null,
+          started_at: sessionStartedAtRef.current ?? endedAt,
+          ended_at: endedAt,
         })
         .select('id')
         .single()
@@ -138,7 +146,11 @@ export default function CollectPage() {
             </p>
             <RespondentForm value={respondent} onChange={setRespondent} />
             <button
-              onClick={() => setStep('draw')}
+              onClick={() => {
+                // Session clock starts here, when drawing begins (see README).
+                if (!sessionStartedAtRef.current) sessionStartedAtRef.current = new Date().toISOString()
+                setStep('draw')
+              }}
               disabled={!respondent.consentGiven}
               className="mt-8 w-full bg-primary-900 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-lg transition-colors"
             >
