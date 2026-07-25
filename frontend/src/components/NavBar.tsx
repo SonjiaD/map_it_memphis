@@ -109,6 +109,7 @@ export function NavBar() {
             <nav className="hidden md:flex items-center gap-1">
               <NavLink to="/" end className={linkClass}>Explore</NavLink>
               <NavLink to="/story" className={linkClass}>The Story</NavLink>
+              <NavLink to="/download" className={linkClass}>Download</NavLink>
               {canCollect && (
                 <NavLink to="/collect" className={({ isActive }) =>
                   `px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
@@ -152,6 +153,7 @@ export function NavBar() {
           {[
             { to: '/', label: 'Explore' },
             { to: '/story', label: 'The Story' },
+            { to: '/download', label: 'Download' },
             ...(canCollect ? [{ to: '/collect', label: 'Collect' }] : []),
             ...(profile?.is_admin ? [{ to: '/admin', label: 'Admin' }] : []),
             ...(user ? [{ to: '/profile', label: 'Profile' }] : [{ to: '/login', label: 'Researcher Login' }]),

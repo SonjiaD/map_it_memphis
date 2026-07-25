@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { AuthGuard, ResearcherGuard, AdminGuard } from './components/AuthGuard'
@@ -9,6 +10,19 @@ import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ProfilePage from './pages/ProfilePage'
+
+// Lazy: pulls in shp-write (jszip + a dbf writer) for Shapefile export, which would
+// otherwise add real weight to every page's initial load, including the field
+// Collect tool on tablets. Only fetched when someone actually visits /download.
+const DownloadPage = lazy(() => import('./pages/DownloadPage'))
+
+function PageLoading() {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <span className="w-6 h-6 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 function AppShell() {
   const location = useLocation()
@@ -22,6 +36,9 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<ExplorePage />} />
           <Route path="/story" element={<StoryPage />} />
+          <Route path="/download" element={
+            <Suspense fallback={<PageLoading />}><DownloadPage /></Suspense>
+          } />
           {/* Legacy content routes fold into the story page */}
           <Route path="/about" element={<Navigate to="/story" replace />} />
           <Route path="/methodology" element={<Navigate to="/story#method" replace />} />
