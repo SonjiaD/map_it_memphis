@@ -141,11 +141,26 @@ function AccessRequests() {
 interface BoundaryRow {
   id: string
   geometry: Polygon
+  researcher_id: string
   session_date: string | null
   respondent_relationship: string | null
   respondent_age_range: string | null
+  years_in_neighborhood: string | null
+  consent_given: boolean
+  notes: string | null
   included_in_average: boolean
   created_at: string
+  // Embedded collector profile (who submitted). PostgREST returns a single object
+  // for a to-one FK, but supabase-js sometimes types it as an array.
+  collector: { full_name: string | null; email: string | null } | { full_name: string | null; email: string | null }[] | null
+}
+
+function collectorOf(r: BoundaryRow): { full_name: string | null; email: string | null } | null {
+  return Array.isArray(r.collector) ? (r.collector[0] ?? null) : r.collector
+}
+function collectorLabel(r: BoundaryRow): string {
+  const c = collectorOf(r)
+  return c?.full_name || c?.email || 'Unknown'
 }
 
 interface PublishedRow {
@@ -153,6 +168,9 @@ interface PublishedRow {
   threshold: number
   published_at: string
 }
+
+const TH = 'text-left font-mono text-[10px] tracking-wider uppercase text-primary-400 font-medium px-3 py-2 whitespace-nowrap'
+const TD = 'px-3 py-2.5 text-sm text-primary-700 whitespace-nowrap'
 
 function MapReview() {
   const { profile } = useAuth()
@@ -163,13 +181,15 @@ function MapReview() {
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [filterCollector, setFilterCollector] = useState<string>('all')
+  const [sortNewest, setSortNewest] = useState(true)
 
   const load = useCallback(async () => {
     setError('')
     const [{ data: boundaries, error: bErr }, { data: pub }] = await Promise.all([
       supabase
         .from('drawn_boundaries')
-        .select('id, geometry, session_date, respondent_relationship, respondent_age_range, included_in_average, created_at')
+        .select('id, geometry, researcher_id, session_date, respondent_relationship, respondent_age_range, years_in_neighborhood, consent_given, notes, included_in_average, created_at, collector:profiles!researcher_id(full_name, email)')
         .order('created_at', { ascending: false }),
       supabase
         .from('published_averages')
@@ -179,7 +199,7 @@ function MapReview() {
         .maybeSingle(),
     ])
     if (bErr) setError(bErr.message)
-    else setRows((boundaries as BoundaryRow[]) ?? [])
+    else setRows((boundaries as unknown as BoundaryRow[]) ?? [])
     setLatest((pub as PublishedRow) ?? null)
     setLoading(false)
   }, [])
@@ -219,6 +239,20 @@ function MapReview() {
     setPublishing(false)
   }
 
+  // Unique collectors present in the data, for the filter dropdown.
+  const collectors = Array.from(
+    new Map(rows.map(r => [r.researcher_id, collectorLabel(r)])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+
+  // Filter is display-only; publishing always uses the included_in_average flag.
+  const visible = rows
+    .filter(r => filterCollector === 'all' || r.researcher_id === filterCollector)
+    .sort((a, b) =>
+      sortNewest
+        ? b.created_at.localeCompare(a.created_at)
+        : a.created_at.localeCompare(b.created_at),
+    )
+
   if (loading) return <Spinner label="Loading submissions..." />
 
   return (
@@ -250,29 +284,73 @@ function MapReview() {
         </div>
       </div>
 
-      <Section label="Submitted maps" count={rows.length}>
-        {rows.length === 0
-          ? <Empty>No resident maps collected yet.</Empty>
-          : rows.map(r => (
-            <label key={r.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-muted transition-colors">
-              <input type="checkbox" checked={r.included_in_average} disabled={busyId === r.id}
-                onChange={e => toggleInclude(r.id, e.target.checked)}
-                className="accent-accent-500 w-4 h-4 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-primary-900 truncate">
-                  {r.respondent_relationship || 'Resident'}
-                  {r.respondent_age_range ? `, ${r.respondent_age_range}` : ''}
-                </p>
-                <p className="font-mono text-[11px] text-primary-500">Session {fmtDate(r.session_date)}</p>
-              </div>
-              <span className={`shrink-0 font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded ${
-                r.included_in_average ? 'bg-accent-50 text-accent-700' : 'bg-surface-muted text-primary-400'
-              }`}>
-                {r.included_in_average ? 'Included' : 'Excluded'}
-              </span>
-            </label>
-          ))}
-      </Section>
+      {/* Filter + sort controls */}
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <h2 className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400">
+          Submitted maps ({visible.length}{filterCollector !== 'all' ? ` of ${rows.length}` : ''})
+        </h2>
+        <div className="flex items-center gap-2 ml-auto">
+          <label className="font-mono text-[10px] tracking-wider uppercase text-primary-400">Collector</label>
+          <select value={filterCollector} onChange={e => setFilterCollector(e.target.value)}
+            className="bg-white border border-border rounded-lg px-2.5 py-1.5 text-sm text-primary-700 focus:outline-none focus:border-accent-500">
+            <option value="all">All collectors</option>
+            {collectors.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+          <button onClick={() => setSortNewest(s => !s)}
+            className="border border-border hover:border-primary-300 rounded-lg px-3 py-1.5 text-sm text-primary-600 transition-colors">
+            {sortNewest ? 'Newest first' : 'Oldest first'} {sortNewest ? '↓' : '↑'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+        {visible.length === 0 ? (
+          <Empty>No resident maps to show.</Empty>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-surface-muted/40">
+                  <th className={TH}>Incl.</th>
+                  <th className={TH}>Collector</th>
+                  <th className={TH}>Submitted</th>
+                  <th className={TH}>Session</th>
+                  <th className={TH}>Relationship</th>
+                  <th className={TH}>Age</th>
+                  <th className={TH}>Years here</th>
+                  <th className={TH}>Consent</th>
+                  <th className={TH}>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map(r => (
+                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-muted/50">
+                    <td className={TD}>
+                      <input type="checkbox" checked={r.included_in_average} disabled={busyId === r.id}
+                        onChange={e => toggleInclude(r.id, e.target.checked)}
+                        className="accent-accent-500 w-4 h-4 align-middle" />
+                    </td>
+                    <td className={`${TD} font-medium text-primary-900`}>{collectorLabel(r)}</td>
+                    <td className={TD}>{fmtDate(r.created_at)}</td>
+                    <td className={TD}>{fmtDate(r.session_date)}</td>
+                    <td className={TD}>{r.respondent_relationship || '—'}</td>
+                    <td className={TD}>{r.respondent_age_range || '—'}</td>
+                    <td className={TD}>{r.years_in_neighborhood || '—'}</td>
+                    <td className={TD}>
+                      <span className={`font-mono text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded ${
+                        r.consent_given ? 'bg-accent-50 text-accent-700' : 'bg-red-50 text-red-600'
+                      }`}>
+                        {r.consent_given ? 'Yes' : 'No'}
+                      </span>
+                    </td>
+                    <td className={`${TD} max-w-[220px] truncate`} title={r.notes || ''}>{r.notes || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </>
   )
 }
@@ -306,7 +384,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex-1 overflow-auto bg-surface-page">
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-16">
+      <div className={`${tab === 'maps' ? 'max-w-5xl' : 'max-w-2xl'} mx-auto px-4 pt-24 pb-16 transition-[max-width]`}>
         <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400 mb-2">Admin console</p>
         <h1 className="font-display text-4xl text-primary-900 mb-5">Study administration</h1>
 
