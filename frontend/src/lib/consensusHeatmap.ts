@@ -76,6 +76,28 @@ export function computeHeatmap(
   return featureCollection(cells)
 }
 
+// The single "averaged" community shape: the region a MAJORITY (>= threshold) of the
+// included resident maps agreed on, dissolved into one polygon. This is what the
+// admin publishes as the public-facing output. Reuses the same agreement grid as the
+// heatmap, then unions the qualifying cells into one shape.
+export function computeAverageShape(
+  boundaries: Polygon[],
+  threshold = 0.5,
+): { geometry: Polygon | MultiPolygon; sourceCount: number } | null {
+  if (boundaries.length === 0) return null
+
+  const heatmap = computeHeatmap(boundaries)
+  const cells = heatmap.features.filter(f => f.properties.agreementPct >= threshold)
+  if (cells.length === 0) return null
+
+  let acc: Feature<Polygon | MultiPolygon> = cells[0]
+  for (let i = 1; i < cells.length; i++) {
+    const merged = union(featureCollection([acc, cells[i]]))
+    if (merged) acc = merged
+  }
+  return { geometry: acc.geometry, sourceCount: boundaries.length }
+}
+
 // Share of the resident consensus area (cells at/above the agreement threshold)
 // that falls inside an official boundary, as a whole percent. The official layer
 // must be a single meaningful unit (e.g. the Memphis 3.0 South District), not a

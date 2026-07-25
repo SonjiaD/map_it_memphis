@@ -1,42 +1,21 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { computeAverageShape } from '../lib/consensusHeatmap'
+import type { Polygon } from 'geojson'
 
-// Admin console, part A: approve or revoke who can collect field data. Admins can
-// read every profile and update roles (RLS policies from migration 0005). Part B
-// (map review + publish) lands with the averaging engine in the next step.
+// Admin console.
+//   Access requests: approve/revoke who can collect field data.
+//   Maps & publishing: curate which submitted maps count toward the community
+//     average, then publish a single averaged shape (the public-facing output).
+// All backed by the admin RLS policies from migrations 0005 + 0006.
 
-interface ProfileRow {
-  id: string
-  email: string | null
-  full_name: string | null
-  is_researcher: boolean
-  is_admin: boolean
-  created_at: string
-}
+const AVERAGE_THRESHOLD = 0.5 // majority agreement
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+const fmtDate = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
-function PersonRow({ row, action }: { row: ProfileRow; action?: React.ReactNode }) {
-  const name = row.full_name || '(no name)'
-  const initial = (name.trim()[0] || '?').toUpperCase()
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <span className="w-9 h-9 rounded-full bg-primary-900 text-white text-sm font-semibold flex items-center justify-center shrink-0">
-        {initial}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-primary-900 truncate">{name}</p>
-        <p className="font-mono text-[11px] text-primary-500 truncate">{row.email}</p>
-      </div>
-      <span className="font-mono text-[11px] text-primary-400 hidden sm:block shrink-0">
-        {fmtDate(row.created_at)}
-      </span>
-      {action}
-    </div>
-  )
-}
+// ---- shared bits ------------------------------------------------------------
 
 function Section({ label, count, children }: { label: string; count: number; children: React.ReactNode }) {
   return (
@@ -52,7 +31,36 @@ function Section({ label, count, children }: { label: string; count: number; chi
   )
 }
 
-export default function AdminPage() {
+// ---- Access requests tab ----------------------------------------------------
+
+interface ProfileRow {
+  id: string
+  email: string | null
+  full_name: string | null
+  is_researcher: boolean
+  is_admin: boolean
+  created_at: string
+}
+
+function PersonRow({ row, action }: { row: ProfileRow; action?: React.ReactNode }) {
+  const name = row.full_name || '(no name)'
+  const initial = (name.trim()[0] || '?').toUpperCase()
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="w-9 h-9 rounded-full bg-primary-900 text-white text-sm font-semibold flex items-center justify-center shrink-0">
+        {initial}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-primary-900 truncate">{name}</p>
+        <p className="font-mono text-[11px] text-primary-500 truncate">{row.email}</p>
+      </div>
+      <span className="font-mono text-[11px] text-primary-400 hidden sm:block shrink-0">{fmtDate(row.created_at)}</span>
+      {action}
+    </div>
+  )
+}
+
+function AccessRequests() {
   const { profile } = useAuth()
   const [rows, setRows] = useState<ProfileRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,8 +81,7 @@ export default function AdminPage() {
   useEffect(() => { load() }, [load])
 
   async function setResearcher(id: string, value: boolean) {
-    setBusyId(id)
-    setError('')
+    setBusyId(id); setError('')
     const { error } = await supabase.from('profiles').update({ is_researcher: value }).eq('id', id)
     if (error) setError(error.message)
     await load()
@@ -85,74 +92,230 @@ export default function AdminPage() {
   const collectors = rows.filter(r => r.is_researcher && !r.is_admin)
   const admins = rows.filter(r => r.is_admin)
 
+  if (loading) return <Spinner label="Loading accounts..." />
+
+  return (
+    <>
+      {error && <ErrorBar>{error}</ErrorBar>}
+      <Section label="Pending requests" count={pending.length}>
+        {pending.length === 0
+          ? <Empty>No requests waiting for review.</Empty>
+          : pending.map(r => (
+            <PersonRow key={r.id} row={r} action={
+              <button onClick={() => setResearcher(r.id, true)} disabled={busyId === r.id}
+                className="shrink-0 bg-primary-900 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                {busyId === r.id ? '...' : 'Approve'}
+              </button>
+            } />
+          ))}
+      </Section>
+
+      <Section label="Approved collectors" count={collectors.length}>
+        {collectors.length === 0
+          ? <Empty>No approved collectors yet.</Empty>
+          : collectors.map(r => (
+            <PersonRow key={r.id} row={r} action={
+              <button onClick={() => setResearcher(r.id, false)} disabled={busyId === r.id}
+                className="shrink-0 border border-border hover:border-primary-300 hover:bg-surface-muted disabled:opacity-50 text-primary-600 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+                {busyId === r.id ? '...' : 'Revoke'}
+              </button>
+            } />
+          ))}
+      </Section>
+
+      <Section label="Administrators" count={admins.length}>
+        {admins.map(r => (
+          <PersonRow key={r.id} row={r} action={
+            <span className="shrink-0 font-mono text-[10px] tracking-wider uppercase bg-primary-900 text-white px-2.5 py-1 rounded">
+              {r.id === profile?.id ? 'You' : 'Admin'}
+            </span>
+          } />
+        ))}
+      </Section>
+    </>
+  )
+}
+
+// ---- Maps & publishing tab --------------------------------------------------
+
+interface BoundaryRow {
+  id: string
+  geometry: Polygon
+  session_date: string | null
+  respondent_relationship: string | null
+  respondent_age_range: string | null
+  included_in_average: boolean
+  created_at: string
+}
+
+interface PublishedRow {
+  source_count: number
+  threshold: number
+  published_at: string
+}
+
+function MapReview() {
+  const { profile } = useAuth()
+  const [rows, setRows] = useState<BoundaryRow[]>([])
+  const [latest, setLatest] = useState<PublishedRow | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [publishing, setPublishing] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  const load = useCallback(async () => {
+    setError('')
+    const [{ data: boundaries, error: bErr }, { data: pub }] = await Promise.all([
+      supabase
+        .from('drawn_boundaries')
+        .select('id, geometry, session_date, respondent_relationship, respondent_age_range, included_in_average, created_at')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('published_averages')
+        .select('source_count, threshold, published_at')
+        .order('published_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ])
+    if (bErr) setError(bErr.message)
+    else setRows((boundaries as BoundaryRow[]) ?? [])
+    setLatest((pub as PublishedRow) ?? null)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function toggleInclude(id: string, value: boolean) {
+    setBusyId(id); setError('')
+    const { error } = await supabase.from('drawn_boundaries').update({ included_in_average: value }).eq('id', id)
+    if (error) setError(error.message)
+    else setRows(rs => rs.map(r => (r.id === id ? { ...r, included_in_average: value } : r)))
+    setBusyId(null)
+  }
+
+  const included = rows.filter(r => r.included_in_average)
+
+  async function publish() {
+    setPublishing(true); setError(''); setNotice('')
+    const avg = computeAverageShape(included.map(r => r.geometry), AVERAGE_THRESHOLD)
+    if (!avg) {
+      setError('Nothing to publish yet: the included maps do not share a majority-agreement area.')
+      setPublishing(false)
+      return
+    }
+    const { error } = await supabase.from('published_averages').insert({
+      neighborhood: 'soulsville',
+      geometry: avg.geometry,
+      threshold: AVERAGE_THRESHOLD,
+      source_count: avg.sourceCount,
+      published_by: profile?.id ?? null,
+    })
+    if (error) setError(error.message)
+    else {
+      setNotice(`Published the community average from ${avg.sourceCount} map${avg.sourceCount === 1 ? '' : 's'}.`)
+      await load()
+    }
+    setPublishing(false)
+  }
+
+  if (loading) return <Spinner label="Loading submissions..." />
+
+  return (
+    <>
+      {error && <ErrorBar>{error}</ErrorBar>}
+      {notice && (
+        <p className="text-sm bg-accent-50 border border-accent-200 text-accent-700 rounded-lg px-4 py-2.5 mb-6">{notice}</p>
+      )}
+
+      {/* Publish control */}
+      <div className="bg-white rounded-2xl border border-border shadow-sm p-5 mb-8">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="font-display text-xl text-primary-900 mb-1">Community average map</h2>
+            <p className="text-sm text-primary-500">
+              {included.length} of {rows.length} map{rows.length === 1 ? '' : 's'} included. Publishing recomputes the
+              area a majority of them agreed on and posts it to the public map.
+            </p>
+            <p className="font-mono text-[11px] text-primary-400 mt-2">
+              {latest
+                ? `Last published ${fmtDate(latest.published_at)} from ${latest.source_count} map${latest.source_count === 1 ? '' : 's'}.`
+                : 'Not published yet.'}
+            </p>
+          </div>
+          <button onClick={publish} disabled={publishing || included.length === 0}
+            className="shrink-0 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
+            {publishing ? 'Publishing...' : 'Publish community map'}
+          </button>
+        </div>
+      </div>
+
+      <Section label="Submitted maps" count={rows.length}>
+        {rows.length === 0
+          ? <Empty>No resident maps collected yet.</Empty>
+          : rows.map(r => (
+            <label key={r.id} className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-muted transition-colors">
+              <input type="checkbox" checked={r.included_in_average} disabled={busyId === r.id}
+                onChange={e => toggleInclude(r.id, e.target.checked)}
+                className="accent-accent-500 w-4 h-4 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-primary-900 truncate">
+                  {r.respondent_relationship || 'Resident'}
+                  {r.respondent_age_range ? `, ${r.respondent_age_range}` : ''}
+                </p>
+                <p className="font-mono text-[11px] text-primary-500">Session {fmtDate(r.session_date)}</p>
+              </div>
+              <span className={`shrink-0 font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded ${
+                r.included_in_average ? 'bg-accent-50 text-accent-700' : 'bg-surface-muted text-primary-400'
+              }`}>
+                {r.included_in_average ? 'Included' : 'Excluded'}
+              </span>
+            </label>
+          ))}
+      </Section>
+    </>
+  )
+}
+
+// ---- small shared UI --------------------------------------------------------
+
+function Spinner({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 text-primary-400 text-sm">
+      <span className="w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
+      {label}
+    </div>
+  )
+}
+function ErrorBar({ children }: { children: React.ReactNode }) {
+  return <p className="text-red-700 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-6">{children}</p>
+}
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="px-4 py-6 text-sm text-primary-400 text-center">{children}</p>
+}
+
+// ---- page shell -------------------------------------------------------------
+
+export default function AdminPage() {
+  const [tab, setTab] = useState<'access' | 'maps'>('access')
+
+  const tabClass = (active: boolean) =>
+    `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      active ? 'bg-primary-900 text-white' : 'text-primary-500 hover:text-primary-900 hover:bg-surface-muted'
+    }`
+
   return (
     <div className="flex-1 overflow-auto bg-surface-page">
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-16">
         <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-primary-400 mb-2">Admin console</p>
-        <h1 className="font-display text-4xl text-primary-900 mb-2">Access requests</h1>
-        <p className="text-sm text-primary-500 mb-8">
-          Approve who can collect field data. Approved collectors can draw resident
-          boundaries and drop asset pins; everyone else stays read-only.
-        </p>
+        <h1 className="font-display text-4xl text-primary-900 mb-5">Study administration</h1>
 
-        {error && (
-          <p className="text-red-700 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-6">{error}</p>
-        )}
+        <div className="flex items-center gap-1 mb-8 bg-white border border-border rounded-xl p-1 w-fit">
+          <button className={tabClass(tab === 'access')} onClick={() => setTab('access')}>Access requests</button>
+          <button className={tabClass(tab === 'maps')} onClick={() => setTab('maps')}>Maps &amp; publishing</button>
+        </div>
 
-        {loading ? (
-          <div className="flex items-center gap-2 text-primary-400 text-sm">
-            <span className="w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
-            Loading accounts...
-          </div>
-        ) : (
-          <>
-            <Section label="Pending requests" count={pending.length}>
-              {pending.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-primary-400 text-center">No requests waiting for review.</p>
-              ) : (
-                pending.map(r => (
-                  <PersonRow key={r.id} row={r} action={
-                    <button
-                      onClick={() => setResearcher(r.id, true)}
-                      disabled={busyId === r.id}
-                      className="shrink-0 bg-primary-900 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
-                    >
-                      {busyId === r.id ? '...' : 'Approve'}
-                    </button>
-                  } />
-                ))
-              )}
-            </Section>
-
-            <Section label="Approved collectors" count={collectors.length}>
-              {collectors.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-primary-400 text-center">No approved collectors yet.</p>
-              ) : (
-                collectors.map(r => (
-                  <PersonRow key={r.id} row={r} action={
-                    <button
-                      onClick={() => setResearcher(r.id, false)}
-                      disabled={busyId === r.id}
-                      className="shrink-0 border border-border hover:border-primary-300 hover:bg-surface-muted disabled:opacity-50 text-primary-600 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-                    >
-                      {busyId === r.id ? '...' : 'Revoke'}
-                    </button>
-                  } />
-                ))
-              )}
-            </Section>
-
-            <Section label="Administrators" count={admins.length}>
-              {admins.map(r => (
-                <PersonRow key={r.id} row={r} action={
-                  <span className="shrink-0 font-mono text-[10px] tracking-wider uppercase bg-primary-900 text-white px-2.5 py-1 rounded">
-                    {r.id === profile?.id ? 'You' : 'Admin'}
-                  </span>
-                } />
-              ))}
-            </Section>
-          </>
-        )}
+        {tab === 'access' ? <AccessRequests /> : <MapReview />}
       </div>
     </div>
   )
