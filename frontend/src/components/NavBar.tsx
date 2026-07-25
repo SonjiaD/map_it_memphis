@@ -29,6 +29,12 @@ function UserChip() {
   const name = profile?.full_name || (user?.user_metadata?.full_name as string) || user?.email || ''
   const initial = (name.trim()[0] || '?').toUpperCase()
 
+  const role = profile?.is_admin
+    ? { label: 'Administrator', cls: 'bg-primary-900 text-white' }
+    : profile?.is_researcher
+      ? { label: 'Collector', cls: 'bg-accent-50 text-accent-700' }
+      : { label: 'Pending approval', cls: 'bg-surface-muted text-primary-600' }
+
   async function handleSignOut() {
     setOpen(false)
     await signOut()
@@ -49,12 +55,16 @@ function UserChip() {
           <div className="px-4 py-3 border-b border-border">
             <p className="text-sm font-semibold text-primary-900 truncate">{name}</p>
             <p className="font-mono text-[11px] text-primary-500 truncate">{user?.email}</p>
-            <span className={`inline-block mt-2 font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded ${
-              profile?.is_researcher ? 'bg-accent-50 text-accent-700' : 'bg-surface-muted text-primary-600'
-            }`}>
-              {profile?.is_researcher ? 'Reviewer' : 'Field contributor'}
+            <span className={`inline-block mt-2 font-mono text-[10px] tracking-wider uppercase px-2 py-0.5 rounded ${role.cls}`}>
+              {role.label}
             </span>
           </div>
+          {profile?.is_admin && (
+            <Link to="/admin" onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-primary-900 hover:bg-surface-muted transition-colors">
+              Admin console
+            </Link>
+          )}
           <Link to="/profile" onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-primary-700 hover:bg-surface-muted transition-colors">
             Profile
@@ -74,6 +84,7 @@ function UserChip() {
 export function NavBar() {
   const { user, profile } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const canCollect = !!(profile?.is_researcher || profile?.is_admin)
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `relative px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
@@ -98,7 +109,7 @@ export function NavBar() {
             <nav className="hidden md:flex items-center gap-1">
               <NavLink to="/" end className={linkClass}>Explore</NavLink>
               <NavLink to="/story" className={linkClass}>The Story</NavLink>
-              {user && (
+              {canCollect && (
                 <NavLink to="/collect" className={({ isActive }) =>
                   `px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
                     isActive ? 'text-accent-700 bg-accent-50' : 'text-accent-600 hover:text-accent-700 hover:bg-accent-50'
@@ -141,7 +152,8 @@ export function NavBar() {
           {[
             { to: '/', label: 'Explore' },
             { to: '/story', label: 'The Story' },
-            ...(user ? [{ to: '/collect', label: 'Collect' }] : []),
+            ...(canCollect ? [{ to: '/collect', label: 'Collect' }] : []),
+            ...(profile?.is_admin ? [{ to: '/admin', label: 'Admin' }] : []),
             ...(user ? [{ to: '/profile', label: 'Profile' }] : [{ to: '/login', label: 'Researcher Login' }]),
           ].map(l => (
             <NavLink

@@ -2,13 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
-// Mirrors the public.profiles table in Supabase. is_researcher is only ever
-// flipped via the Supabase dashboard/service role, never by the user themselves.
+// Mirrors the public.profiles table in Supabase. is_researcher (approved collector)
+// and is_admin (super-admin) are only ever set by an admin or the service role,
+// never by the user themselves. A brand-new account has both false = pending.
 export interface Profile {
   id: string
   email: string | null
   full_name: string | null
   is_researcher: boolean
+  is_admin: boolean
   created_at: string
 }
 

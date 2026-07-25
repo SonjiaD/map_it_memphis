@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { AuthGuard } from './components/AuthGuard'
+import { AuthGuard, ResearcherGuard, AdminGuard } from './components/AuthGuard'
 import { NavBar } from './components/NavBar'
 import StoryPage from './pages/StoryPage'
 import ExplorePage from './pages/ExplorePage'
 import CollectPage from './pages/CollectPage'
+import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ProfilePage from './pages/ProfilePage'
@@ -26,9 +27,10 @@ function AppShell() {
           <Route path="/methodology" element={<Navigate to="/story#method" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          {/* Open collection: any signed-in account can collect for now. Display on
-              the public map is curated separately via is_published (see AuthContext). */}
-          <Route path="/collect" element={<AuthGuard><CollectPage /></AuthGuard>} />
+          {/* Collection requires an approved collector or an admin (ResearcherGuard);
+              unapproved signups see a pending notice. */}
+          <Route path="/collect" element={<ResearcherGuard><CollectPage /></ResearcherGuard>} />
+          <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
           <Route path="/profile" element={<AuthGuard><ProfilePage /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
