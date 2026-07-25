@@ -3,9 +3,15 @@ import { AMENITY_CATEGORIES } from './pins'
 import { BOUNDARY_COLORS } from './OfficialLayers'
 import { useLayerStatus } from './useStaticGeojson'
 
-// Which layers are visible on the public map. Census tracts + the Soulsville
-// study-area outline are on by default (plus the single Knowledge Quest partner
-// pin); everything else starts off to keep the first view uncluttered.
+// Which layers are visible on the public map. Census tracts, the Soulsville
+// study-area outline, and the published community-average boundary are on by
+// default (plus the single Knowledge Quest partner pin); everything else starts
+// off to keep the first view uncluttered.
+//
+// Individual resident-drawn maps and asset pins are never shown on the public map
+// (confidentiality: only the admin-published average is public, see migration
+// 0007), so there is exactly one "resident data" layer here, not per-submission
+// toggles.
 export interface LayerState {
   censusTracts: boolean
   zipCodes: boolean
@@ -14,9 +20,7 @@ export interface LayerState {
   amenities: Record<string, boolean>
   transit: boolean
   knowledgeQuest: boolean
-  residentHeatmap: boolean
-  residentBoundaries: boolean
-  residentPins: boolean
+  communityAverage: boolean
 }
 
 export const DEFAULT_LAYER_STATE: LayerState = {
@@ -27,9 +31,7 @@ export const DEFAULT_LAYER_STATE: LayerState = {
   amenities: Object.fromEntries(AMENITY_CATEGORIES.map(c => [c.key, false])),
   transit: false,
   knowledgeQuest: true,
-  residentHeatmap: false,
-  residentBoundaries: false,
-  residentPins: false,
+  communityAverage: true,
 }
 
 // Panel metadata shared with the Legend component.
@@ -115,10 +117,9 @@ function Group({ title, children, defaultOpen = true }: {
   )
 }
 
-export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
+export function LayerTogglePanel({ layers, onChange }: {
   layers: LayerState
   onChange: (next: LayerState) => void
-  residentBoundaryCount: number
 }) {
   const [open, setOpen] = useState(true)
 
@@ -157,13 +158,8 @@ export function LayerTogglePanel({ layers, onChange, residentBoundaryCount }: {
             </Group>
 
             <Group title="Resident data">
-              <Toggle label="Consensus heatmap" swatch="#b8593a" checked={layers.residentHeatmap}
-                onChange={v => onChange({ ...layers, residentHeatmap: v })} />
-              <Toggle label={`Drawn boundaries${residentBoundaryCount > 0 ? ` (${residentBoundaryCount})` : ''}`}
-                swatch="#c96d4f" checked={layers.residentBoundaries}
-                onChange={v => onChange({ ...layers, residentBoundaries: v })} />
-              <Toggle label="Asset pins" swatch="#db2777" checked={layers.residentPins}
-                onChange={v => onChange({ ...layers, residentPins: v })} />
+              <Toggle label="Community-drawn boundary" swatch="#b8593a" checked={layers.communityAverage}
+                onChange={v => onChange({ ...layers, communityAverage: v })} />
             </Group>
 
             <Group title="Community assets">

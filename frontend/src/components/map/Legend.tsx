@@ -17,9 +17,7 @@ export function Legend({ layers }: { layers: LayerState }) {
       entries.push({ label: row.label, swatch: row.swatch, dashed: row.dashed })
     }
   }
-  if (layers.residentHeatmap) entries.push({ label: 'Consensus heatmap', swatch: '#b8593a' })
-  if (layers.residentBoundaries) entries.push({ label: 'Drawn boundaries', swatch: '#c96d4f' })
-  if (layers.residentPins) entries.push({ label: 'Asset pins', swatch: '#db2777' })
+  if (layers.communityAverage) entries.push({ label: 'Community-drawn boundary', swatch: '#b8593a' })
   for (const cat of AMENITY_CATEGORIES) {
     if (layers.amenities[cat.key]) entries.push({ label: cat.label, swatch: cat.color })
   }

@@ -98,19 +98,15 @@ export function computeAverageShape(
   return { geometry: acc.geometry, sourceCount: boundaries.length }
 }
 
-// Share of the resident consensus area (cells at/above the agreement threshold)
+// Share of a single published shape (e.g. the admin-published community average)
 // that falls inside an official boundary, as a whole percent. The official layer
 // must be a single meaningful unit (e.g. the Memphis 3.0 South District), not a
 // tiling layer like all census tracts, which would trivially cover everything.
-export function computeOverlapStat(
-  heatmapCells: FeatureCollection<Polygon | MultiPolygon, HeatmapCellProps>,
+export function computeShapeOverlapStat(
+  shape: Polygon | MultiPolygon,
   official: FeatureCollection | null,
-  threshold = 0.5,
 ): number | null {
-  if (!official || heatmapCells.features.length === 0) return null
-
-  const consensusCells = heatmapCells.features.filter(f => f.properties.agreementPct >= threshold)
-  if (consensusCells.length === 0) return null
+  if (!official) return null
 
   const officialPolys = official.features.filter(
     (f): f is Feature<Polygon | MultiPolygon> =>
@@ -118,20 +114,15 @@ export function computeOverlapStat(
   )
   if (officialPolys.length === 0) return null
 
-  const consensusArea = consensusCells.reduce((sum, c) => sum + area(c), 0)
+  const shapeFeature: Feature<Polygon | MultiPolygon> = { type: 'Feature', properties: {}, geometry: shape }
+  const shapeArea = area(shapeFeature)
+  if (shapeArea === 0) return null
 
-  // Intersection area: per cell, take the largest overlap with any official
-  // feature (cells are small, so a cell effectively belongs to one tract).
   let intersectionArea = 0
-  for (const cell of consensusCells) {
-    let cellBest = 0
-    for (const poly of officialPolys) {
-      const clipped = intersect(featureCollection([cell, poly]))
-      if (clipped) cellBest = Math.max(cellBest, area(clipped))
-    }
-    intersectionArea += cellBest
+  for (const poly of officialPolys) {
+    const clipped = intersect(featureCollection([shapeFeature, poly]))
+    if (clipped) intersectionArea += area(clipped)
   }
 
-  if (consensusArea === 0) return null
-  return Math.round((intersectionArea / consensusArea) * 100)
+  return Math.round((intersectionArea / shapeArea) * 100)
 }

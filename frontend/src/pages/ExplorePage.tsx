@@ -1,18 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, ZoomControl } from 'react-leaflet'
 import { LayerTogglePanel, DEFAULT_LAYER_STATE, type LayerState } from '../components/map/LayerTogglePanel'
 import { CensusTractsLayer, ZipCodesLayer, SouthDistrictLayer, SoulsvilleStudyAreaLayer } from '../components/map/OfficialLayers'
 import { AmenityLayer } from '../components/map/AmenityLayer'
 import { TransitLayer } from '../components/map/TransitLayer'
 import { KnowledgeQuestMarker } from '../components/map/KnowledgeQuestMarker'
-import { ConsensusHeatmapLayer, DrawnBoundariesLayer, AssetPinsLayer } from '../components/map/ResidentLayers'
+import { PublishedAverageLayer } from '../components/map/PublishedAverageLayer'
 import { StatCallout } from '../components/map/StatCallout'
 import { Legend } from '../components/map/Legend'
 import { AMENITY_CATEGORIES } from '../components/map/pins'
-import { useDrawnBoundaries } from '../hooks/useDrawnBoundaries'
-import { computeHeatmap } from '../lib/consensusHeatmap'
-import { useAuth } from '../contexts/AuthContext'
+import { usePublishedAverage } from '../hooks/usePublishedAverage'
 
 const SOULSVILLE_CENTER: [number, number] = [35.104, -90.025]
 // Keep visitors around Memphis: padded clip bbox, matching the data extent
@@ -53,62 +51,33 @@ function WelcomeCard({ onDismiss }: { onDismiss: () => void }) {
   )
 }
 
-function EmptyResidentDataCard({ signedIn }: { signedIn: boolean }) {
+// Shown when the community layer is toggled on but nothing has been published yet.
+// Individual resident maps are never shown here (confidentiality), so this is the
+// only "not there yet" state to explain, rather than a live count of submissions.
+function EmptyAverageCard() {
   return (
     <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] w-[min(92vw,26rem)] bg-primary-900 text-white rounded-xl shadow-lg px-5 py-4">
-      <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-accent-300 mb-1.5">No resident drawings yet</p>
+      <p className="font-mono text-[10px] tracking-[0.18em] uppercase text-accent-300 mb-1.5">Not published yet</p>
       <p className="text-sm leading-relaxed text-primary-100">
-        Youth researchers are collecting resident-drawn boundaries now. They will appear
-        here as they come in.
+        Youth researchers are collecting resident-drawn boundaries now. The study team
+        publishes a single community-drawn boundary once enough maps come in.
       </p>
-      <div className="flex items-center gap-4 mt-3">
-        <Link to="/story#method" className="text-sm font-semibold text-white hover:text-accent-300 transition-colors">
-          See how it works
-        </Link>
-        {signedIn && (
-          <Link to="/collect" className="text-sm font-semibold text-accent-300 hover:text-accent-200 transition-colors">
-            Start collecting
-          </Link>
-        )}
-      </div>
+      <Link to="/story#method" className="inline-block text-sm font-semibold text-white hover:text-accent-300 transition-colors mt-3">
+        See how it works
+      </Link>
     </div>
   )
 }
 
 export default function ExplorePage() {
-  const { user } = useAuth()
-  const [searchParams] = useSearchParams()
-  // Arriving from the Story CTA (/?data=1) pre-enables the resident layers so the
-  // "residents draw it differently" payoff is the first thing you see.
-  const [layers, setLayers] = useState<LayerState>(() =>
-    searchParams.get('data') === '1'
-      ? { ...DEFAULT_LAYER_STATE, residentHeatmap: true, residentBoundaries: true }
-      : DEFAULT_LAYER_STATE,
-  )
+  const [layers, setLayers] = useState<LayerState>(DEFAULT_LAYER_STATE)
   const [showWelcome, setShowWelcome] = useState(
     () => !localStorage.getItem(WELCOME_DISMISSED_KEY),
   )
 
-  // Live resident data: initial fetch + realtime inserts, shared by the heatmap,
-  // the raw-boundaries layer, and the stat callout so only one channel is open.
-  const boundaries = useDrawnBoundaries()
-  const heatmap = useMemo(
-    () => computeHeatmap(boundaries.map(b => b.geometry)),
-    [boundaries],
-  )
-
-  // The first time real resident data arrives, reveal the consensus + boundaries so
-  // the map teaches the thesis on its own. Runs once, so it never fights a visitor
-  // who then toggles the layers back off.
-  const autoRevealed = useRef(false)
-  useEffect(() => {
-    if (!autoRevealed.current && boundaries.length > 0) {
-      autoRevealed.current = true
-      setLayers(prev => ({ ...prev, residentHeatmap: true, residentBoundaries: true }))
-    }
-  }, [boundaries.length])
-
-  const residentLayerOn = layers.residentHeatmap || layers.residentBoundaries || layers.residentPins
+  // The single public-facing resident-data output: whatever the admin last
+  // published. Individual submissions are never fetched on the public map.
+  const { average } = usePublishedAverage()
 
   function dismissWelcome() {
     localStorage.setItem(WELCOME_DISMISSED_KEY, '1')
@@ -145,17 +114,13 @@ export default function ExplorePage() {
         {layers.transit && <TransitLayer />}
         {layers.knowledgeQuest && <KnowledgeQuestMarker />}
 
-        {layers.residentHeatmap && <ConsensusHeatmapLayer heatmap={heatmap} />}
-        {layers.residentBoundaries && <DrawnBoundariesLayer boundaries={boundaries} />}
-        {layers.residentPins && <AssetPinsLayer />}
+        {layers.communityAverage && average && <PublishedAverageLayer geometry={average.geometry} />}
       </MapContainer>
 
-      <LayerTogglePanel layers={layers} onChange={setLayers} residentBoundaryCount={boundaries.length} />
+      <LayerTogglePanel layers={layers} onChange={setLayers} />
       <Legend layers={layers} />
-      {residentLayerOn && boundaries.length === 0 && <EmptyResidentDataCard signedIn={!!user} />}
-      {(layers.residentHeatmap || layers.residentBoundaries) && (
-        <StatCallout heatmap={heatmap} boundaryCount={boundaries.length} />
-      )}
+      {layers.communityAverage && !average && <EmptyAverageCard />}
+      {layers.communityAverage && average && <StatCallout average={average} />}
       {showWelcome && <WelcomeCard onDismiss={dismissWelcome} />}
     </div>
   )
