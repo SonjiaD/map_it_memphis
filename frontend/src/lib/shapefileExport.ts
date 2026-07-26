@@ -1,6 +1,7 @@
 import * as shpwrite from 'shp-write'
 import JSZip from 'jszip'
 import type { Polygon, MultiPolygon, Feature, FeatureCollection } from 'geojson'
+import { triggerDownload } from './downloadFile'
 
 // shp-write's polygon exporter matches features by the literal string "Polygon"
 // and silently drops anything else (see its src/geojson.js isType check), so a
@@ -20,17 +21,6 @@ function toPolygonFeatures(
     properties,
     geometry: { type: 'Polygon' as const, coordinates },
   }))
-}
-
-function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 // shp-write.zip returns a base64 zip whose files live under `{folderName}/`. One map's

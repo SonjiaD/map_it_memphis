@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { computeAverageShape } from '../lib/consensusHeatmap'
 import { downloadShapefile, downloadAllShapefiles } from '../lib/shapefileExport'
+import { downloadCsv } from '../lib/csvExport'
 import { CustomSelect } from '../components/CustomSelect'
 import type { Polygon } from 'geojson'
 
@@ -217,12 +218,14 @@ function MapReview() {
   const [filterCollector, setFilterCollector] = useState<string>('all')
   const [sortNewest, setSortNewest] = useState(true)
   const [downloadingAll, setDownloadingAll] = useState(false)
+  const [downloadingCsv, setDownloadingCsv] = useState(false)
   // Synchronous re-entrancy guard: computeAverageShape below runs before the first
   // await, so React won't repaint the "Publishing..." state until it's done. A ref
   // (unlike useState) updates immediately, so it actually blocks a second click
   // fired inside that window, which `disabled={publishing}` alone cannot.
   const publishingRef = useRef(false)
   const downloadingAllRef = useRef(false)
+  const downloadingCsvRef = useRef(false)
 
   const load = useCallback(async () => {
     setError('')
@@ -346,6 +349,41 @@ function MapReview() {
     }
   }
 
+  // Tabular respondent/session info only, no geometry, for spreadsheet analysis.
+  // Same fields as shapefileProps but with full column names (CSV has no DBF
+  // 8-character limit) and always covers every submission, ignoring the filter,
+  // for consistency with "Download all maps".
+  function csvRow(r: BoundaryRow) {
+    return {
+      Number: numberById.get(r.id) ?? 0,
+      Collector: collectorLabel(r),
+      Email: collectorEmail(r),
+      Date: fmtDateCT(r.started_at),
+      'Start (CT)': fmtTimeCT(r.started_at),
+      'End (CT)': fmtTimeCT(r.ended_at),
+      Relationship: r.respondent_relationship ?? '',
+      'Age range': r.respondent_age_range ?? '',
+      'Years in neighborhood': r.years_in_neighborhood ?? '',
+      Consent: r.consent_given ? 'yes' : 'no',
+      Notes: r.notes ?? '',
+    }
+  }
+
+  async function downloadCsvInfo() {
+    if (downloadingCsvRef.current || rows.length === 0) return
+    downloadingCsvRef.current = true
+    setDownloadingCsv(true); setError('')
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      downloadCsv(rows.map(csvRow), `mapp-submissions_${new Date().toLocaleDateString('en-CA', { timeZone: MEMPHIS_TZ })}`)
+    } catch (e: any) {
+      setError(e?.message || 'Could not build the CSV.')
+    } finally {
+      downloadingCsvRef.current = false
+      setDownloadingCsv(false)
+    }
+  }
+
   // Filter is display-only; publishing always uses the included_in_average flag.
   const visible = rows
     .filter(r => filterCollector === 'all' || r.researcher_id === filterCollector)
@@ -394,10 +432,16 @@ function MapReview() {
         </h2>
         <div className="flex items-center gap-2 ml-auto">
           <button onClick={downloadAll} disabled={downloadingAll || rows.length === 0}
-            title="Download every submitted map as Shapefiles, one zip"
+            title="Download every submitted map's polygon as Shapefiles, one zip"
             className="flex items-center gap-2 bg-primary-900 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
             {downloadingAll && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-            {downloadingAll ? 'Preparing...' : `Download all (${rows.length})`}
+            {downloadingAll ? 'Preparing...' : `Download all maps · Shapefiles (${rows.length})`}
+          </button>
+          <button onClick={downloadCsvInfo} disabled={downloadingCsv || rows.length === 0}
+            title="Download respondent and session info (no geometry) as a single CSV, for spreadsheet analysis"
+            className="flex items-center gap-2 border border-border hover:border-primary-300 hover:bg-surface-muted disabled:opacity-50 text-primary-700 text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+            {downloadingCsv && <span className="w-3.5 h-3.5 border-2 border-primary-300 border-t-primary-700 rounded-full animate-spin" />}
+            {downloadingCsv ? 'Preparing...' : 'Download info · CSV'}
           </button>
           <label className="font-mono text-[10px] tracking-wider uppercase text-primary-400 ml-1">Collector</label>
           <CustomSelect
