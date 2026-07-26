@@ -546,7 +546,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 // ---- page shell -------------------------------------------------------------
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'access' | 'maps'>('access')
+  const [tab, setTab] = useState<'access' | 'maps'>('maps')
 
   const tabClass = (active: boolean) =>
     `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -560,8 +560,8 @@ export default function AdminPage() {
         <h1 className="font-display text-4xl text-primary-900 mb-5">Study administration</h1>
 
         <div className="flex items-center gap-1 mb-8 bg-white border border-border rounded-xl p-1 w-fit">
-          <button className={tabClass(tab === 'access')} onClick={() => setTab('access')}>Access requests</button>
           <button className={tabClass(tab === 'maps')} onClick={() => setTab('maps')}>Maps &amp; publishing</button>
+          <button className={tabClass(tab === 'access')} onClick={() => setTab('access')}>Access requests</button>
         </div>
 
         {tab === 'access' ? <AccessRequests /> : <MapReview />}
