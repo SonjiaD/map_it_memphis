@@ -38,6 +38,37 @@ function ProfileCard() {
   )
 }
 
+function ProfileBar() {
+  const { user, profile } = useAuth()
+  const name = profile?.full_name || (user?.user_metadata?.full_name as string) || ''
+  const initial = (name.trim()[0] || '?').toUpperCase()
+
+  return (
+    <div className="bg-white rounded-2xl border border-border shadow-sm px-6 py-4 flex items-center gap-4 flex-wrap">
+      <div className="w-12 h-12 rounded-full bg-primary-900 text-white font-display text-lg flex items-center justify-center shrink-0">
+        {initial}
+      </div>
+      <div className="min-w-0">
+        <h1 className="font-display text-lg text-primary-900 leading-tight truncate">{name || 'Your profile'}</h1>
+        <p className="font-mono text-[11px] text-primary-500 truncate">{profile?.email || user?.email}</p>
+      </div>
+      <div className="flex items-center gap-2 ml-auto flex-wrap">
+        <span className="inline-flex items-center gap-1.5 bg-accent-50 border border-accent-200 text-accent-700 text-xs font-medium px-3 py-1 rounded-lg">
+          <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="currentColor">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          Can collect field data
+        </span>
+        {profile?.is_researcher && (
+          <span className="font-mono text-[10px] tracking-wider uppercase bg-primary-900 text-white px-2.5 py-1 rounded">
+            Reviewer
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ---- My submitted maps (researcher-only, read-only) -------------------------
 
 interface MySubmissionRow {
@@ -171,8 +202,8 @@ export default function ProfilePage() {
     return (
       <div className="flex-1 overflow-auto bg-surface-page">
         <div className="max-w-4xl mx-auto px-4 pt-24 pb-16">
-          <div className="max-w-sm mb-10">
-            <ProfileCard />
+          <div className="mb-8">
+            <ProfileBar />
           </div>
           <MySubmissions />
         </div>
