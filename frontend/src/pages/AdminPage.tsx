@@ -5,6 +5,7 @@ import { computeAverageShape } from '../lib/consensusHeatmap'
 import { downloadShapefile, downloadAllShapefiles } from '../lib/shapefileExport'
 import { downloadCsv } from '../lib/csvExport'
 import { CustomSelect } from '../components/CustomSelect'
+import { MEMPHIS_TZ, fmtDate, fmtDateCT, fmtTimeCT } from '../lib/dateFormat'
 import type { Polygon } from 'geojson'
 
 // Admin console.
@@ -15,17 +16,6 @@ import type { Polygon } from 'geojson'
 // All backed by the admin RLS policies from migrations 0005 + 0006.
 
 const AVERAGE_THRESHOLD = 0.5 // majority agreement
-
-const fmtDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
-
-// Memphis is Central Time. Session start/end are stored UTC; show them in the field
-// team's local time so the numbers match what happened on the ground.
-const MEMPHIS_TZ = 'America/Chicago'
-const fmtDateCT = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('en-US', { timeZone: MEMPHIS_TZ, month: 'short', day: 'numeric', year: 'numeric' }) : '—'
-const fmtTimeCT = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleTimeString('en-US', { timeZone: MEMPHIS_TZ, hour: 'numeric', minute: '2-digit' }) : '—'
 
 // Filename convention for downloaded maps: {n}_{researcher}_{yyyy-mm-dd}_{hhmm}ct,
 // e.g. 1_sonja_deng_2026-07-22_1430ct. Date/time in Memphis local time.
